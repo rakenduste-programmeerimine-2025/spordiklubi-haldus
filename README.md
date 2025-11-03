@@ -4,10 +4,13 @@
   - Sign up / Sign in
 ### 2)Dashboard
 #### coach:
-- upcoming events and training sessions
+- Upcoming events and training sessions
 - Team overview (attentance %)
 - Notifications: RSVP updates, player notes
-
+### player:
+- Upcoming events and training sessions
+- Player overview
+- Notifications
 
 ### 3)Calendar
 #### coach:
