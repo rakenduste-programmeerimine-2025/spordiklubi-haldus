@@ -53,7 +53,7 @@
 - Edit profile
 - Notification settings
 
-### Low-fidelity wireframe
+# Low-fidelity wireframe
 
 ## Landing page
 ![Landingpage](https://drive.google.com/uc?export=view&id=144EWay-k-muYJX63wauJutkvsZGfP8ev)
