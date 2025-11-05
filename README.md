@@ -129,3 +129,4 @@
 ![ClubSettings3](https://drive.google.com/uc?export=view&id=1QYVNeV2sy4fujuft5-XC7ahMTd_pFrrX)
 
 - Armin
+- Jan
