@@ -128,5 +128,6 @@
 ![ClubSettings2](https://drive.google.com/uc?export=view&id=1DRly0jt4L2x1YQrnV-01zTNp0rUm8a4e)
 ![ClubSettings3](https://drive.google.com/uc?export=view&id=1QYVNeV2sy4fujuft5-XC7ahMTd_pFrrX)
 
-- Armin
-- Jan
+Marcus
+Armin
+Jan Aaron
