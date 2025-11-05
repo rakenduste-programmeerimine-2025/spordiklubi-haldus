@@ -58,10 +58,10 @@
 ### Landing page
 ![Landingpage](https://drive.google.com/uc?export=view&id=144EWay-k-muYJX63wauJutkvsZGfP8ev)
 ![Landingpage2](https://drive.google.com/uc?export=view&id=1q9oRucQ4l-w5DUdeBJD5no8KqEBNOHyA)
-### Register
-![Register](https://drive.google.com/uc?export=view&id=1snnLKVrojrYu9uXV7ZUNzpjsxS9D5Ti1)
 ### Login
 ![Login](https://drive.google.com/uc?export=view&id=126ZmjYSEo217ZoNbwGjQV1vBih0tZzFH)
+### Register
+![Register](https://drive.google.com/uc?export=view&id=1snnLKVrojrYu9uXV7ZUNzpjsxS9D5Ti1)
 ### Choose role
 ![ChooseRole](https://drive.google.com/uc?export=view&id=12Bg3pg7_UiYBzZJ4K4sWXfVQ2rCicE3x)
 ### Create club
