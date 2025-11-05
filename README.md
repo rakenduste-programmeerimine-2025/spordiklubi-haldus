@@ -2,9 +2,10 @@
 ## Functionalities
 ### 1)Authentication & Access
   - Sign up / Sign in
-  - Allows new users to register and existing users to securely log in using their credentials
+  - Allows new users to register and existing users can securely log in using their credentials
   - Validates user roles (coach or player) to provide access to the appropriate dashboard
   - Manages user sessions to ensure secure access control
+
 ### 2)Dashboard
 #### coach:
 - Upcoming events and training sessions
@@ -43,7 +44,7 @@
 - Reply
 - Mention teammates
 
-### 6)Setting
+### 6)Settings
 #### coach:
 - Edit profile
 - Notification settings
