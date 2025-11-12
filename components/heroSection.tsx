@@ -1,0 +1,46 @@
+import { motion } from "framer-motion"
+import { Button } from "@/components/ui/button"
+import { GlassPanel } from "./ui/glasspanel"
+import Link from "next/link"
+import GlassButton from "./ui/backbutton"
+
+export default function HeroSection() {
+  return (
+    <section className="h-screen flex flex-col items-center justify-center text-center snap-start">
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: "url(/images/landingpicture.jpg)" }}
+      >
+        <div className="absolute inset-0 backdrop-blur-sm " />
+      </div>
+      <div className="items-center justify-center shadow-xl/30 pb-8">
+        <img
+          src="/images/syncc.png"
+          alt="Logo"
+          className="h-60 w-auto mb-4"
+        />
+        <h1 className="text-white text-4xl">SPORTSYNC</h1>
+      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        <GlassPanel>
+          <h1 className="text-5xl font-bold mb-4 text-white">
+            Manage Your Sports Club Effortlessly
+          </h1>
+
+          <p className="text-lg text-white/90 mb-6 max-w-md">
+            All-in-one platform to organize teams, schedule matches, and track
+            performance.
+          </p>
+
+          <Link href="/signup">
+            <GlassButton className="bg-green">Get Started</GlassButton>
+          </Link>
+        </GlassPanel>
+      </motion.div>
+    </section>
+  )
+}
