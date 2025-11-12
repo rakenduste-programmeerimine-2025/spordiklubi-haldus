@@ -2,6 +2,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { GlassPanel } from "./ui/glasspanel"
 import Link from "next/link"
+import GlassButton from "./ui/backbutton"
 
 export default function HeroSection() {
   return (
@@ -10,7 +11,7 @@ export default function HeroSection() {
         className="fixed inset-0 -z-10 bg-cover bg-center"
         style={{ backgroundImage: "url(/images/landingpicture.jpg)" }}
       >
-        <div className="absolute inset-0 backdrop-blur-sm bg-black/40" />
+        <div className="absolute inset-0 backdrop-blur-sm " />
       </div>
       <div className="items-center justify-center shadow-xl/30 pb-8">
         <img
@@ -36,12 +37,7 @@ export default function HeroSection() {
           </p>
 
           <Link href="/signup">
-            <Button
-              size="lg"
-              className="border-white border-2"
-            >
-              Get Started
-            </Button>
+            <GlassButton className="bg-green">Get Started</GlassButton>
           </Link>
         </GlassPanel>
       </motion.div>

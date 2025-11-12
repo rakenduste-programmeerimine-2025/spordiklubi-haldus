@@ -21,7 +21,9 @@ export default function FeaturesSection() {
           <motion.div whileHover={{ scale: 1.05 }}>
             <GlassPanel className="bg-gradient-to-br from-blue-700/60 via-purple-500/50 to-pink-400/40 backdrop-blur-[20px] w-64 h-48 flex flex-col items-center justify-center">
               <Users className="h-10 w-10 text-white mb-3" />
-              <h3 className="text-xl font-semibold mb-2">Team Management</h3>
+              <h3 className="text-xl text-white font-semibold mb-2">
+                Team Management
+              </h3>
               <p className="text-white/80 text-sm">
                 Manage players, roles, and team communications effortlessly.
               </p>
@@ -32,7 +34,9 @@ export default function FeaturesSection() {
           <motion.div whileHover={{ scale: 1.05 }}>
             <GlassPanel className="bg-gradient-to-br from-pink-700/60 via-green-500/50 to-green-400/40 backdrop-blur-[20px] w-64 h-48 flex flex-col items-center justify-center">
               <Calendar className="h-10 w-10 text-white mb-3" />
-              <h3 className="text-xl font-semibold mb-2">Smart Scheduling</h3>
+              <h3 className="text-xl text-white font-semibold mb-2">
+                Smart Scheduling
+              </h3>
               <p className="text-white/80 text-sm">
                 Schedule matches and training sessions
               </p>

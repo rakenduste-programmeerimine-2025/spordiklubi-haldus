@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import GlassButton from "../ui/backbutton"
 
 export default function Navbar() {
   return (
@@ -16,16 +17,10 @@ export default function Navbar() {
       </div>
       <div className="flex items-center gap-4">
         <Link href="/auth/login">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white border-2 border-white rounded-md hover:bg-white/10"
-          >
-            Login
-          </Button>
+          <GlassButton>Login</GlassButton>
         </Link>
         <Link href="/auth/sign-up">
-          <Button size="sm">Get Started</Button>
+          <GlassButton>Get started</GlassButton>
         </Link>
       </div>
     </nav>
