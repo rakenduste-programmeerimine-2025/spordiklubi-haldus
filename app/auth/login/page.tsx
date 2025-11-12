@@ -12,8 +12,13 @@ export default function Page() {
     <div className="relative min-h-screen w-full bg-cover bg-center flex flex-col items-center justify-center p-6"
     style={{ backgroundImage: "url('/images/landingpicture.jpg')"}}
     >
-      <div className="absolute top-6 left-6">
-        <GlassButton onClick={() => router.push("/") }>← Back</GlassButton>
+      <div className="fixed top-4 left-4 z-20">
+        <GlassButton
+          className="text-sm md:text-base"
+          onClick={() => router.back()}
+        >
+          ← Back
+        </GlassButton>
       </div>
       <div className="absolute top-10 w-full flex justify-center">
         <Image
