@@ -14,11 +14,11 @@ export default function HeroSection() {
       </div>
       <div className="items-center justify-center shadow-xl/30 pb-8">
         <img
-          src="/images/sportsynclogo.svg"
+          src="/images/syncc.png"
           alt="Logo"
-          className="h-10 w-auto"
+          className="h-60 w-auto mb-4"
         />
-        SPORTSYNC
+        <h1 className="text-white text-4xl">SPORTSYNC</h1>
       </div>
       <motion.div
         initial={{ opacity: 0, y: 50 }}

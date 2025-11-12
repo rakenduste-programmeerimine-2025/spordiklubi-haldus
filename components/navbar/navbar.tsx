@@ -8,7 +8,7 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 w-full z-50 bg-white/30 backdrop-blur-md px-8 py-4 flex justify-between items-center">
       <div className="flex items-center">
         <img
-          src="/images/sportsynclogo.svg"
+          src="/images/syncc.png"
           alt="Logo"
           className="h-10 w-auto"
         />
