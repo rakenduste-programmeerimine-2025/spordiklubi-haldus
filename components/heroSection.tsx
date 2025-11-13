@@ -36,7 +36,7 @@ export default function HeroSection() {
             performance.
           </p>
 
-          <Link href="/signup">
+          <Link href="/auth/sign-up">
             <GlassButton className="bg-green">Get Started</GlassButton>
           </Link>
         </GlassPanel>
