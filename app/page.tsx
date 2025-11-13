@@ -7,6 +7,7 @@ import FeaturesSection from "@/components/featuresSection"
 import Navbar from "@/components/navbar/navbar"
 import { GlassPanel } from "@/components/ui/glasspanel"
 import GlassButton from "@/components/ui/backbutton"
+import Link from "next/link"
 
 export default function LandingPage() {
   return (
@@ -23,7 +24,9 @@ export default function LandingPage() {
         >
           <GlassPanel className="pt-5 h-[180px] min-h-0 text-center justify-center items-center">
             <h2 className="text-4xl font-semibold mb-4 text-white">Join Now</h2>
-            <GlassButton className="mt-4">Get Started</GlassButton>
+            <Link href="/auth/sign-up">
+              <GlassButton className="mt-4">Get Started</GlassButton>
+            </Link>
           </GlassPanel>
         </motion.div>
       </section>
