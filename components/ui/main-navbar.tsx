@@ -16,6 +16,7 @@ import {
   Settings,
   Shuffle,
 } from "lucide-react"
+import { motion } from "framer-motion" // 👈 add this
 
 const navItems = [
   { href: "/dashboard", label: "dashboard", icon: Home },
@@ -31,25 +32,18 @@ export function MainNavbar() {
 
   const toggleMenu = () => setMenuOpen(prev => !prev)
 
-  // TODO: wire these to real logic later
   const handleLogout = () => {
-    // e.g. await supabase.auth.signOut()
     console.log("logout clicked")
   }
 
   return (
     <header className="w-full shadow-sm">
-      {/* 🔷 TOP BLUE BAR (taller now) */}
+      {/* 🔷 TOP BLUE BAR */}
       <div className="flex items-center justify-between px-6 py-4 md:py-5 bg-[#2563EB] text-white">
         {/* Left: logo + club name */}
         <div className="flex items-center gap-3">
           <div className="relative h-12 w-12 rounded-full overflow-hidden bg-white/10">
-            {/* change to your logo path */}
-            <Image
-              src="/images/kure.jpg"
-              fill
-              alt="Club logo"
-            />
+            <Image src="/images/kure.jpg" fill alt="Club logo" />
           </div>
           <div className="leading-tight">
             <p className="font-semibold text-sm sm:text-base md:text-lg">
@@ -89,7 +83,6 @@ export function MainNavbar() {
             />
           </button>
 
-          {/* Dropdown menu */}
           {menuOpen && (
             <div className="absolute right-0 top-[110%] mt-1 w-44 rounded-xl bg-white text-gray-800 shadow-lg border border-gray-100 z-50">
               <ul className="py-1 text-sm">
@@ -135,29 +128,42 @@ export function MainNavbar() {
         </div>
       </div>
 
-      {/* 🔽 BOTTOM NAV TABS BAR */}
+      {/* 🔽 BOTTOM NAV TABS BAR WITH MOTION PILL */}
       <nav className="w-full bg-[#f3f0f4] px-4 py-2">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
           {navItems.map(item => {
             const Icon = item.icon
-            const isActive = pathname.startsWith(item.href)
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + "/")
 
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={isActive ? "page" : undefined}
-                className={[
-                  "flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2 text-xs sm:text-sm capitalize transition",
-                  "hover:bg-white hover:shadow-sm",
-                  isActive
-                    ? "bg-white shadow-sm text-gray-900 border border-blue-300"
-                    : "text-gray-600",
-                ].join(" ")}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </Link>
+              <div key={item.href} className="relative flex-1">
+                <Link
+                  href={item.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className="relative flex items-center justify-center gap-2 rounded-full px-3 py-2 text-xs sm:text-sm capitalize transition"
+                >
+                  {/* 🔹 Animated background pill */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-pill"
+                      className="absolute inset-0 rounded-full bg-white shadow-sm border border-blue-300"
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  )}
+
+                  {/* Content on top of the pill */}
+                  <div
+                    className={[
+                      "relative z-10 flex items-center gap-2",
+                      isActive ? "text-gray-900" : "text-gray-600",
+                    ].join(" ")}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </div>
+                </Link>
+              </div>
             )
           })}
         </div>
@@ -165,3 +171,5 @@ export function MainNavbar() {
     </header>
   )
 }
+
+
