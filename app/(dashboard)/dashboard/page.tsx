@@ -44,16 +44,18 @@ export default function DashboardSection() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="md:col-span-2 lg:col-span-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <Card className="md:col-span-1">
           <CardHeader>
             <CardTitle>Training Activity</CardTitle>
             <CardDescription>Weekly breakdown for this month</CardDescription>
           </CardHeader>
 
-          <CardContent className="h-48">
-            {" "}
-            <ChartContainer config={chartConfig}>
+          <CardContent>
+            <ChartContainer
+              config={chartConfig}
+              className="h-48"
+            >
               <AreaChart
                 accessibilityLayer
                 data={chartData}
