@@ -8,7 +8,6 @@ import {
   Home,
   CalendarDays,
   ClipboardList,
-  Settings2,
   MessageCircle,
   RotateCcw,
   ChevronDown,
@@ -22,7 +21,6 @@ const navItems = [
   { href: "/dashboard", label: "dashboard", icon: Home },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/sportevents", label: "Events", icon: ClipboardList },
-  { href: "/manage-events", label: "Manage events", icon: Settings2 },
   { href: "/forum", label: "Forum", icon: MessageCircle },
 ]
 
@@ -43,7 +41,11 @@ export function MainNavbar() {
         {/* Left: logo + club name */}
         <div className="flex items-center gap-3">
           <div className="relative h-12 w-12 rounded-full overflow-hidden bg-white/10">
-            <Image src="/images/kure.jpg" fill alt="Club logo" />
+            <Image
+              src="/images/kure.jpg"
+              fill
+              alt="Club logo"
+            />
           </div>
           <div className="leading-tight">
             <p className="font-semibold text-sm sm:text-base md:text-lg">
@@ -137,7 +139,10 @@ export function MainNavbar() {
               pathname === item.href || pathname.startsWith(item.href + "/")
 
             return (
-              <div key={item.href} className="relative flex-1">
+              <div
+                key={item.href}
+                className="relative flex-1"
+              >
                 <Link
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
@@ -148,7 +153,11 @@ export function MainNavbar() {
                     <motion.div
                       layoutId="nav-pill"
                       className="absolute inset-0 rounded-full bg-white shadow-sm border border-blue-300"
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 350,
+                        damping: 30,
+                      }}
                     />
                   )}
 
@@ -171,5 +180,3 @@ export function MainNavbar() {
     </header>
   )
 }
-
-
