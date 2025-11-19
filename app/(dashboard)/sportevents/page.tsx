@@ -10,14 +10,16 @@ import {
   X,
   HelpCircle,
   Minus,
+  Pencil,
+  Trash2,
+  Plus,
 } from "lucide-react"
 import {
   EventRsvpModal,
   type RsvpEvent,
   type RSVPStatus,
 } from "@/components/event-rsvp-modal"
-
-// You will add EventEditModal in the next step
+import { EventEditModal } from "@/components/event-edit-modal"
 
 const mockEvents: RsvpEvent[] = [
   {
@@ -84,12 +86,14 @@ const CURRENT_USER_ROLE: "coach" | "player" = "coach"
 type EventFilter = "upcoming" | "past"
 
 export default function EventsPage() {
-  const [events] = useState<RsvpEvent[]>(mockEvents)
+  const [events, setEvents] = useState<RsvpEvent[]>(mockEvents)
   const [myRsvps, setMyRsvps] = useState<Record<number, MyRsvp>>({})
   const [filter, setFilter] = useState<EventFilter>("upcoming")
-  const [activeRsvpEvent, setActiveRsvpEvent] = useState<RsvpEvent | null>(null)
+  const [isManaging, setIsManaging] = useState(false)
 
-  const currentUserInitials = getInitials(CURRENT_USER_NAME)
+  const [activeRsvpEvent, setActiveRsvpEvent] = useState<RsvpEvent | null>(null)
+  const [editingEvent, setEditingEvent] = useState<RsvpEvent | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
 
   const handleSaveRsvp = (
     eventId: number,
@@ -101,6 +105,42 @@ export default function EventsPage() {
     }))
     // later: send to Supabase
   }
+
+  const handleDeleteEvent = (eventId: number) => {
+    setEvents(prev => prev.filter(e => e.id !== eventId))
+    // later: delete in Supabase
+  }
+
+  const handleAddEvent = () => {
+    const nextId = events.length ? Math.max(...events.map(e => e.id)) + 1 : 1
+
+    const blankEvent: RsvpEvent = {
+      id: nextId,
+      title: "",
+      date: "2025-11-01",
+      time: "18:00",
+      location: "",
+      description: "",
+      type: "training",
+      attendees: [],
+    }
+
+    setIsCreating(true)
+    setEditingEvent(blankEvent)
+  }
+
+  const handleSaveEvent = (updated: RsvpEvent) => {
+    setEvents(prev => {
+      const exists = prev.some(e => e.id === updated.id)
+      if (!exists) {
+        return [...prev, updated]
+      }
+      return prev.map(e => (e.id === updated.id ? updated : e))
+    })
+    // later: upsert in Supabase
+  }
+
+  const currentUserInitials = getInitials(CURRENT_USER_NAME)
 
   // Separate upcoming vs past by date
   const today = new Date()
@@ -117,6 +157,7 @@ export default function EventsPage() {
     }
   })
 
+  // --- Event pill (RSVP in normal mode, edit/delete in manage mode) ---
   const renderEventCard = (event: RsvpEvent) => {
     const myRsvp = myRsvps[event.id]
 
@@ -166,8 +207,14 @@ export default function EventsPage() {
       <button
         key={event.id}
         type="button"
-        onClick={() => setActiveRsvpEvent(event)}
-        className="relative w-full text-left focus:outline-none cursor-pointer"
+        onClick={() => {
+          if (!isManaging) {
+            setActiveRsvpEvent(event)
+          }
+        }}
+        className={`relative w-full text-left focus:outline-none ${
+          isManaging ? "cursor-default" : "cursor-pointer"
+        }`}
       >
         {/* Dark pill behind – left arch */}
         <div
@@ -185,7 +232,7 @@ export default function EventsPage() {
             ${baseLight}
           `}
         >
-          {/* Top row: title + type chip */}
+          {/* Top row: title + type chip + (coach manage icons) */}
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-slate-900 md:text-base">
@@ -193,11 +240,41 @@ export default function EventsPage() {
               </h2>
             </div>
 
-            <span
-              className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${chipClasses}`}
-            >
-              {event.type}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${chipClasses}`}
+              >
+                {event.type}
+              </span>
+
+              {CURRENT_USER_ROLE === "coach" && isManaging && (
+                <div className="flex items-center gap-1 text-slate-600">
+                  <button
+                    type="button"
+                    onClick={e => {
+                      e.stopPropagation()
+                      setIsCreating(false)
+                      setEditingEvent(event)
+                    }}
+                    className="rounded-full p-1 hover:bg-slate-200"
+                    aria-label="Edit event"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={e => {
+                      e.stopPropagation()
+                      handleDeleteEvent(event.id)
+                    }}
+                    className="rounded-full p-1 hover:bg-slate-200"
+                    aria-label="Delete event"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Time / location / description */}
@@ -242,7 +319,7 @@ export default function EventsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      {/* Header row: left filter */}
+      {/* Header row: left filter, right manage / create buttons */}
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <button
@@ -261,8 +338,41 @@ export default function EventsPage() {
               }`}
             />
           </button>
-          <p className="text-sm text-slate-500">See all trainings and games</p>
+          <p className="text-sm text-slate-500">
+            {isManaging
+              ? "Manage and edit your events"
+              : "See all trainings and games"}
+          </p>
         </div>
+
+        {CURRENT_USER_ROLE === "coach" && (
+          <div className="mt-1 flex items-center gap-2">
+            {/* Create event (only when managing) */}
+            {isManaging && (
+              <button
+                type="button"
+                onClick={handleAddEvent}
+                className="inline-flex items-center gap-2 rounded-full bg-[#3156ff] px-4 py-2 text-sm font-medium text-white hover:bg-[#2442cc]"
+              >
+                <Plus className="h-4 w-4" />
+                Create event
+              </button>
+            )}
+
+            {/* Manage Events Toggle (blue as well) */}
+            <button
+              type="button"
+              onClick={() => setIsManaging(prev => !prev)}
+              className={`
+        inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white
+        ${isManaging ? "bg-[#2442cc]" : "bg-[#3156ff]"}
+        hover:bg-[#2442cc]
+      `}
+            >
+              {isManaging ? "Done" : "Manage events"}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Events list */}
@@ -286,6 +396,20 @@ export default function EventsPage() {
           onClose={() => setActiveRsvpEvent(null)}
           onSave={data => handleSaveRsvp(activeRsvpEvent.id, data)}
           currentUserRole={CURRENT_USER_ROLE}
+        />
+      )}
+
+      {/* Edit / Create event modal (coach only) */}
+      {editingEvent && CURRENT_USER_ROLE === "coach" && (
+        <EventEditModal
+          event={editingEvent}
+          isOpen={!!editingEvent}
+          isNew={isCreating}
+          onClose={() => {
+            setEditingEvent(null)
+            setIsCreating(false)
+          }}
+          onSave={handleSaveEvent}
         />
       )}
     </div>
