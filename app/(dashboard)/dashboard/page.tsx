@@ -54,12 +54,12 @@ export default function DashboardSection() {
           <CardContent>
             <ChartContainer
               config={chartConfig}
-              className="h-48"
+              className="w-full h-48"
             >
               <AreaChart
                 accessibilityLayer
                 data={chartData}
-                margin={{ left: 20, right: 12 }}
+                margin={{ top: 20, left: 20, right: 10, bottom: 20 }}
               >
                 <CartesianGrid vertical={false} />
                 <XAxis
@@ -75,9 +75,9 @@ export default function DashboardSection() {
                 <Area
                   dataKey="activity"
                   type="natural"
-                  fill="var(--color-activity)"
+                  fill="blue"
                   fillOpacity={0.4}
-                  stroke="var(--color-activity)"
+                  stroke="blue"
                 />
               </AreaChart>
             </ChartContainer>
@@ -87,7 +87,7 @@ export default function DashboardSection() {
             <div className="flex w-full items-start gap-2 text-sm">
               <div className="grid gap-2">
                 <div className="flex items-center gap-2 leading-none font-medium">
-                  Trending up this month <TrendingUp className="h-4 w-4" />
+                  This month <TrendingUp className="h-4 w-4" />
                 </div>
                 <div className="text-muted-foreground flex items-center gap-2 leading-none">
                   Week 1 – Week 4
@@ -96,9 +96,9 @@ export default function DashboardSection() {
             </div>
           </CardFooter>
         </Card>
-        <div className="grid grid-rows-3 gap-6">
-          {/* Active Players */}
-          <Card>
+
+        <div className="grid gap-6 overflow-y-auto pr-2 max-h-[350px]">
+          <Card className="bg-blue-50 border-l-4 border-blue-300">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Active Players</CardTitle>
               <Users className="h-5 w-5 text-muted-foreground" />
@@ -111,8 +111,7 @@ export default function DashboardSection() {
             </CardContent>
           </Card>
 
-          {/* Upcoming Events */}
-          <Card>
+          <Card className="bg-blue-50 border-l-4 border-blue-300">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Upcoming Events</CardTitle>
               <CalendarDays className="h-5 w-5 text-muted-foreground" />
@@ -123,14 +122,15 @@ export default function DashboardSection() {
             </CardContent>
           </Card>
 
-          {/* This Month Summary */}
-          <Card>
+          <Card className="bg-blue-50 border-l-4 border-blue-300">
             <CardHeader>
               <CardTitle>This Month</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-4xl font-bold">8</p>
-              <p className="text-muted-foreground">Total sessions & matches</p>
+              <p className="text-muted-foreground">
+                Total training sessions & matches
+              </p>
             </CardContent>
           </Card>
         </div>
