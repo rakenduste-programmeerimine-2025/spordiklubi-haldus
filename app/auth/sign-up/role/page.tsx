@@ -14,7 +14,7 @@ export default function RolePage() {
   const handleSelect = (role: Role) => {
     sessionStorage.setItem("signup_role", role)
     router.push(
-      role === "coach" ? "/auth/signup/coach/create-club" : "/auth/signup/done",
+      role === "coach" ? "/auth/sign-up/createclub" : "/auth/sign-up/done",
     )
   }
 
