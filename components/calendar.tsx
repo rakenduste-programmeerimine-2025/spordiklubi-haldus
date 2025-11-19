@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format, isSameDay } from "date-fns"
-import { Clock, MapPin, X } from "lucide-react"
+import { Clock, MapPin, X, ExternalLink } from "lucide-react"
 import { MonthCalendar } from "./monthcalendar"
 
 type Attendee = {
@@ -74,6 +74,13 @@ function getInitials(name: string) {
     .map(part => part[0]?.toUpperCase() ?? "")
     .slice(0, 2)
     .join("")
+}
+
+// Linking button to google maps, taking location text
+function getMapsUrl(location: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    location,
+  )}`
 }
 
 export function ClubCalendar() {
@@ -249,9 +256,23 @@ export function ClubCalendar() {
                 </span>
               </div>
 
+              {/* Location row with small Maps icon button */}
               <div className="flex items-center gap-2 text-xs md:text-sm text-slate-500">
                 <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                <span>{activeEvent.location}</span>
+
+                <span className="truncate flex items-center gap-2">
+                  {activeEvent.location}
+
+                  <a
+                    href={getMapsUrl(activeEvent.location)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-slate-500 hover:bg-slate-100 hover:text-slate-700 shrink-0"
+                    aria-label="Open in Google Maps"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </span>
               </div>
             </div>
 
