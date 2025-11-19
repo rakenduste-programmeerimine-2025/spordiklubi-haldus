@@ -1,0 +1,24 @@
+export type ForumCategory = "announcement" | "training" | "transport" | "general"
+
+export type ForumReply = {
+  id: string
+  authorName: string
+  authorInitials: string
+  createdAt: string
+  message: string
+}
+
+export type ForumPost = {
+  id: string
+  authorName: string
+  authorInitials: string
+  createdAt: string
+  category: ForumCategory
+  message: string
+  replies: ForumReply[]
+}
+
+export type ForumFilters = {
+  category: ForumCategory | "all"
+  search: string
+}

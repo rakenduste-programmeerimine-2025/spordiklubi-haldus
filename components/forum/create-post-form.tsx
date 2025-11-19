@@ -1,0 +1,66 @@
+"use client"
+
+import { useState } from "react"
+
+type CreatePostFormProps = {
+  onSubmit: (data: { category: string; message: string }) => Promise<void> | void
+}
+
+const categories = ["General", "Announcement", "Training", "Transport"]
+
+export function CreatePostForm({ onSubmit }: CreatePostFormProps) {
+  const [category, setCategory] = useState("General")
+  const [message, setMessage] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!message.trim()) return
+
+    try {
+      setIsSubmitting(true)
+      await onSubmit({ category, message })
+      setMessage("")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <div>
+        <h2 className="text-base text-gray-900 font-semibold">Create a Post</h2>
+        <p className="text-sm text-gray-500">Share something with the team</p>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm text-gray-900 font-semibold">Category</p>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="flex w-full items-center justify-between rounded-full bg-[#f2f2f5] px-4 py-2 text-left text-sm text-gray-700"
+        >
+          {categories.map((c) => (
+            <option key={c}>{c}</option>
+          ))}
+        </select>
+      </div>
+
+      <textarea
+        className="min-h-[80px] w-full resize-none rounded-3xl bg-[#f2f2f5] px-4 py-3 text-sm text-gray-700 outline-none"
+        placeholder="What’s on your mind?"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+      />
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="inline-flex items-center gap-2 rounded-full bg-[#1D4ED8] px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
+      >
+        <span>➤</span>
+        <span>{isSubmitting ? "Posting..." : "Post"}</span>
+      </button>
+    </form>
+  )
+}
