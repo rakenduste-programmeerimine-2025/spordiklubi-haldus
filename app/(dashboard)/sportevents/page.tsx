@@ -204,33 +204,40 @@ export default function EventsPage() {
             : "bg-slate-200 text-slate-700"
 
     return (
-      <button
+      <div
         key={event.id}
-        type="button"
+        role={!isManaging ? "button" : undefined}
+        tabIndex={!isManaging ? 0 : -1}
         onClick={() => {
           if (!isManaging) {
             setActiveRsvpEvent(event)
           }
         }}
-        className={`relative w-full text-left focus:outline-none ${
+        onKeyDown={e => {
+          if (!isManaging && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault()
+            setActiveRsvpEvent(event)
+          }
+        }}
+        className={`relative w-full text-left outline-none ${
           isManaging ? "cursor-default" : "cursor-pointer"
         }`}
       >
         {/* Dark pill behind – left arch */}
         <div
           className={`
-            pointer-events-none absolute inset-0 rounded-[40px]
-            ${baseDark}
-          `}
+          pointer-events-none absolute inset-0 rounded-[40px]
+          ${baseDark}
+        `}
         />
 
         {/* Light pill in front */}
         <div
           className={`
-            relative ml-2 rounded-[40px] px-6 py-4 md:px-7 md:py-5
-            shadow-sm hover:-translate-y-0.5 transition-transform
-            ${baseLight}
-          `}
+          relative ml-2 rounded-[40px] px-6 py-4 md:px-7 md:py-5
+          shadow-sm hover:-translate-y-0.5 transition-transform
+          ${baseLight}
+        `}
         >
           {/* Top row: title + type chip + (coach manage icons) */}
           <div className="flex items-start justify-between gap-3">
@@ -313,7 +320,7 @@ export default function EventsPage() {
             </div>
           </div>
         </div>
-      </button>
+      </div>
     )
   }
 
