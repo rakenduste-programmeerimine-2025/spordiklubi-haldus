@@ -29,7 +29,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
               category: e.target.value as ForumFilters["category"],
             })
           }
-          className="rounded-full bg-[#f2f2f5] px-3 py-1 text-sm text-gray-700"
+          className="rounded-full bg-transparent px-3 py-1 text-sm text-gray-700"
         >
           {categories.map((c) => (
             <option key={c} value={c}>
@@ -41,7 +41,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
         </select>
       </div>
 
-      <input
+      {/* <input
         type="search"
         placeholder="Search..."
         value={filters.search}
@@ -52,7 +52,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
           })
         }
         className="w-40 rounded-full bg-[#f2f2f5] px-3 py-1 text-sm text-gray-700 outline-none"
-      />
+      /> */}
     </div>
   )
 }
