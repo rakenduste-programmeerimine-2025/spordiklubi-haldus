@@ -13,7 +13,7 @@ export default function Page() {
         style={{ backgroundImage: "url(/images/landingpicture.jpg)" }}
       />
 
-      {/* Back button (top-left) */}
+      {/* Back button */}
       <div className="fixed top-4 left-4 z-20">
         <GlassButton
           className="text-sm md:text-base"
@@ -23,7 +23,7 @@ export default function Page() {
         </GlassButton>
       </div>
 
-      {/* Main content pulled upward */}
+      {/* Main content */}
       <main
         className="
           w-full max-w-6xl flex flex-col items-center
@@ -32,7 +32,7 @@ export default function Page() {
           -mt-[2vh] md:-mt-[4vh] lg:-mt-[6vh]
         "
       >
-        {/* Logo + headings */}
+        {/* Logo, headings */}
         <div className="flex flex-col items-center text-center gap-1.4">
           <Image
             src="/images/syncc.png"
@@ -45,15 +45,9 @@ export default function Page() {
           <h1 className="text-white text-4xl md:text-5xl font-bold leading-tight">
             Join SportSync
           </h1>
-          {/* Step pills */}
-          {/* <div className="mt-6 flex items-center gap-2">
-            <span className="h-5 w-14 rounded-full bg-blue-600/90" />
-            <span className="h-5 w-14 rounded-full bg-white/70" />
-            <span className="h-5 w-14 rounded-full bg-white/70" />
-          </div> */}
         </div>
 
-        {/* Sign up form (higher + compact) */}
+        {/* Sign up form */}
         <div className="w-full flex justify-center -mt-0.5">
           <div className="w-full max-w-[360px]">
             <SignUpForm className="scale-[0.9] origin-top" />

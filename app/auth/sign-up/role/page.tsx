@@ -94,7 +94,6 @@ export default function RolePage() {
   )
 }
 
-/** Slightly larger role button (balanced size) */
 function RoleButton({
   label,
   description,

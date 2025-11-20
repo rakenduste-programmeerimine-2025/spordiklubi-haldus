@@ -15,7 +15,7 @@ import {
   Settings,
   Shuffle,
 } from "lucide-react"
-import { motion } from "framer-motion" // 👈 add this
+import { motion } from "framer-motion"
 
 const navItems = [
   { href: "/dashboard", label: "dashboard", icon: Home },
@@ -36,9 +36,9 @@ export function MainNavbar() {
 
   return (
     <header className="w-full shadow-sm">
-      {/* 🔷 TOP BLUE BAR */}
+      {/* Top blue bar */}
       <div className="flex items-center justify-between px-6 py-4 md:py-5 bg-[#2563EB] text-white">
-        {/* Left: logo + club name */}
+        {/* Left: logo, club name */}
         <div className="flex items-center gap-3">
           <div className="relative h-12 w-12 rounded-full overflow-hidden bg-white/10">
             <Image
@@ -57,7 +57,7 @@ export function MainNavbar() {
           </div>
         </div>
 
-        {/* Right: refresh + role + user + dropdown */}
+        {/* Right: refresh, role, user, dropdown */}
         <div className="relative flex items-center gap-4">
           <button
             type="button"
@@ -130,7 +130,7 @@ export function MainNavbar() {
         </div>
       </div>
 
-      {/* 🔽 BOTTOM NAV TABS BAR WITH MOTION PILL */}
+      {/* Bottom nav tabs bar with motion pill */}
       <nav className="w-full bg-[#f3f0f4] px-4 py-2">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
           {navItems.map(item => {
@@ -148,7 +148,7 @@ export function MainNavbar() {
                   aria-current={isActive ? "page" : undefined}
                   className="relative flex items-center justify-center gap-2 rounded-full px-3 py-2 text-xs sm:text-sm capitalize transition"
                 >
-                  {/* 🔹 Animated background pill */}
+                  {/* Animated background pill */}
                   {isActive && (
                     <motion.div
                       layoutId="nav-pill"

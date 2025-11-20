@@ -1,4 +1,3 @@
-// components/event-rsvp-modal.tsx
 "use client"
 
 import { useState } from "react"
@@ -25,7 +24,6 @@ export type RsvpEvent = {
   attendees: RsvpAttendee[]
 }
 
-// 🔥 FIX 1 — Add currentUserRole to props
 type EventRsvpModalProps = {
   event: RsvpEvent
   isOpen: boolean
@@ -43,7 +41,6 @@ function getInitials(name: string) {
     .join("")
 }
 
-// 🔥 FIX 2 — Accept and default currentUserRole
 export function EventRsvpModal({
   event,
   isOpen,
@@ -210,7 +207,7 @@ export function EventRsvpModal({
                       </span>
                     </div>
 
-                    {/* 🔥 FIX 3 — Only coach sees player notes */}
+                    {/* Only coach sees player notes */}
                     {currentUserRole === "coach" && person.note && (
                       <p className="pl-10 text-[11px] md:text-xs text-slate-500">
                         “{person.note}”
