@@ -94,7 +94,7 @@ export function ClubCalendar() {
   return (
     <>
       <section className="mt-6 space-y-2">
-        {/* Title + subtitle */}
+        {/* Title, subtitle */}
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Calendar</h1>
           <p className="text-sm text-slate-500">
@@ -104,7 +104,7 @@ export function ClubCalendar() {
 
         {/* Big card: two panels inside */}
         <div className="mt-4 flex flex-col gap-6 rounded-3xl bg-white p-6 shadow-md md:flex-row md:h-[420px]">
-          {/* LEFT: calendar panel */}
+          {/* Left: calendar panel */}
           <div className="flex h-full items-center justify-center md:w-1/2">
             <MonthCalendar
               selectedDate={selectedDate}
@@ -113,7 +113,7 @@ export function ClubCalendar() {
             />
           </div>
 
-          {/* RIGHT: events panel with divider + scroll */}
+          {/* Right: events panel with divider, scroll */}
           <div className="flex h-full flex-col md:w-1/2 md:border-l md:border-slate-200/70 md:pl-6">
             {/* Header (fixed, non-scrolling) */}
             <div>
@@ -145,12 +145,12 @@ export function ClubCalendar() {
                       pointer-events-none absolute inset-0 rounded-[40px]
                       ${
                         event.type === "game"
-                          ? "bg-[#FDBA74]" // darker orange
+                          ? "bg-[#FDBA74]"
                           : event.type === "training"
-                            ? "bg-[#93C5FD]" // darker blue
+                            ? "bg-[#93C5FD]"
                             : event.type === "analysis"
-                              ? "bg-[#6EE7B7]" // darker green
-                              : "bg-[#3156ff]" // default
+                              ? "bg-[#6EE7B7]"
+                              : "bg-[#3156ff]"
                       }
                     `}
                   />
@@ -161,16 +161,16 @@ export function ClubCalendar() {
                       relative ml-1.5 rounded-[40px] px-8 py-4 shadow-sm transition-transform hover:-translate-y-0.5
                       ${
                         event.type === "game"
-                          ? "bg-[#FFF4E6]" // light orange
+                          ? "bg-[#FFF4E6]"
                           : event.type === "training"
-                            ? "bg-[#EFF6FF]" // light blue
+                            ? "bg-[#EFF6FF]"
                             : event.type === "analysis"
-                              ? "bg-[#ECFDF5]" // light green
-                              : "bg-[#eef1ff]" // default light
+                              ? "bg-[#ECFDF5]"
+                              : "bg-[#eef1ff]"
                       }
                     `}
                   >
-                    {/* Header row: title + type label */}
+                    {/* Header row: title, type label */}
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="text-sm font-semibold text-slate-900 truncate">
                         {event.title}
@@ -181,11 +181,11 @@ export function ClubCalendar() {
                           shrink-0 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide
                           ${
                             event.type === "game"
-                              ? "bg-[#FFE5C2] text-[#9A3412]" // orange
+                              ? "bg-[#FFE5C2] text-[#9A3412]"
                               : event.type === "training"
-                                ? "bg-[#DBEAFE] text-[#1D4ED8]" // blue
+                                ? "bg-[#DBEAFE] text-[#1D4ED8]"
                                 : event.type === "analysis"
-                                  ? "bg-[#DCFCE7] text-[#15803D]" // green
+                                  ? "bg-[#DCFCE7] text-[#15803D]"
                                   : "bg-slate-200 text-slate-700"
                           }
                         `}
@@ -222,7 +222,7 @@ export function ClubCalendar() {
         </div>
       </section>
 
-      {/* Event details modal – BIGGER VERSION */}
+      {/* Event details modal */}
       {activeEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-lg md:max-w-2xl rounded-3xl bg-white p-6 md:p-8 shadow-2xl">

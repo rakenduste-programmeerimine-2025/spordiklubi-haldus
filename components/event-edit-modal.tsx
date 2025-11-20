@@ -1,4 +1,3 @@
-// components/event-edit-modal.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -29,7 +28,7 @@ export function EventEditModal({
 }: EventEditModalProps) {
   const [draft, setDraft] = useState<RsvpEvent>(event)
 
-  // keep draft in sync when you open modal for a different event
+  // keep draft in sync when open modal for a different event
   useEffect(() => {
     setDraft(event)
   }, [event])
@@ -44,7 +43,7 @@ export function EventEditModal({
   }
 
   const handleSave = () => {
-    // simple safety: ensure we always have some type
+    // simple safety: ensure always have some type
     const safeDraft: RsvpEvent = {
       ...draft,
       type: draft.type || "training",
@@ -91,7 +90,7 @@ export function EventEditModal({
             />
           </div>
 
-          {/* Date + Time */}
+          {/* Date, Time */}
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">

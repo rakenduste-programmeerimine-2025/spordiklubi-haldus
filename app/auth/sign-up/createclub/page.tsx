@@ -6,9 +6,9 @@ import Image from "next/image"
 import GlassButton from "@/components/ui/backbutton"
 import { GlassPanel } from "@/components/ui/glasspanel"
 import { UploadCloud } from "lucide-react"
-import { SignupButton } from "@/components/ui/signupbutton" //  existing button component
+import { SignupButton } from "@/components/ui/signupbutton"
 
-// Constants for file validation, accepts max 5MB and specific formats
+// Constants for file validation, max 5MB and specific formats
 const MAX_SIZE_BYTES = 5 * 1024 * 1024
 const ACCEPT = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml"]
 
@@ -21,7 +21,7 @@ export default function CreateClubPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // Guard — only coaches can access
+  // Guard, only coaches can access
   useEffect(() => {
     const role = sessionStorage.getItem("signup_role")
     if (role !== "coach") router.replace("/auth/sign-up/role")
@@ -53,7 +53,7 @@ export default function CreateClubPage() {
 
     sessionStorage.setItem("signup_club_name", clubName.trim())
 
-    // TODO: you can call createClub() here later
+    // TODO: call createClub() here later
     setTimeout(() => {
       setLoading(false)
       router.push("/auth/sign-up/done")
@@ -80,7 +80,7 @@ export default function CreateClubPage() {
 
       {/* Main content */}
       <main className="w-full max-w-6xl flex flex-col items-center pt-8 md:pt-10 lg:pt-12 gap-3 -mt-[2vh] md:-mt-[4vh] lg:-mt-[6vh]">
-        {/* Logo + title */}
+        {/* Logo, title */}
         <div className="flex flex-col items-center text-center gap-1.4">
           <Image
             src="/images/syncc.png"
@@ -131,7 +131,7 @@ export default function CreateClubPage() {
             </label>
 
             <div className="flex items-center gap-3">
-              {/* Left icon tile — more glassy now */}
+              {/* Left icon tile */}
               <div
                 className="flex items-center justify-center w-16 h-16 rounded-2xl 
                   bg-gradient-to-br from-blue-700/40 via-blue-600/40 to-blue-400/40
@@ -144,7 +144,7 @@ export default function CreateClubPage() {
                 />
               </div>
 
-              {/* Right file picker (glassy like inputs + button) */}
+              {/* Right file picker */}
               <div className="flex-1">
                 <label
                   htmlFor="clubLogo"
@@ -187,7 +187,6 @@ export default function CreateClubPage() {
 
           {/* Buttons */}
           <div className="pt-2 flex flex-col gap-2">
-            {/* Using your SignupButton with new label */}
             <SignupButton
               type="button"
               label="Create club"

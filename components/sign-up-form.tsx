@@ -14,7 +14,7 @@ export function SignUpForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [fullName, setFullName] = useState("") // ✅ Added full name
+  const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [repeatPassword, setRepeatPassword] = useState("")
@@ -41,7 +41,7 @@ export function SignUpForm({
         options: {
           emailRedirectTo: `${window.location.origin}/protected`,
           data: {
-            full_name: fullName, // ✅ store in user metadata
+            full_name: fullName,
           },
         },
       })

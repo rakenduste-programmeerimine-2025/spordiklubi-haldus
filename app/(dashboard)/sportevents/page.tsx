@@ -1,4 +1,3 @@
-// app/(dashboard)/sportevents/page.tsx
 "use client"
 
 import { useState } from "react"
@@ -69,7 +68,7 @@ type MyRsvp = {
   note: string
 }
 
-// simple helper for now – later you can take this from logged-in user
+// later: from logged-in user
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -157,11 +156,11 @@ export default function EventsPage() {
     }
   })
 
-  // --- Event pill (RSVP in normal mode, edit/delete in manage mode) ---
+  // Event pill (RSVP in normal mode, edit/delete in manage mode)
   const renderEventCard = (event: RsvpEvent) => {
     const myRsvp = myRsvps[event.id]
 
-    // RSVP status → icon + label
+    // RSVP status icon, label
     let StatusIcon = Minus
     let statusLabel = "No response"
 
@@ -223,7 +222,7 @@ export default function EventsPage() {
           isManaging ? "cursor-default" : "cursor-pointer"
         }`}
       >
-        {/* Dark pill behind – left arch */}
+        {/* Dark pill behind left arch */}
         <div
           className={`
           pointer-events-none absolute inset-0 rounded-[40px]
@@ -239,7 +238,7 @@ export default function EventsPage() {
           ${baseLight}
         `}
         >
-          {/* Top row: title + type chip + (coach manage icons) */}
+          {/* Top row: title, type chip (coach manage icons) */}
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-slate-900 md:text-base">
@@ -284,7 +283,7 @@ export default function EventsPage() {
             </div>
           </div>
 
-          {/* Time / location / description */}
+          {/* Time, location, description */}
           <div className="mt-3 space-y-1.5 text-xs text-slate-600 md:text-sm">
             <div className="flex items-center gap-2">
               <Clock className="h-3.5 w-3.5" />
@@ -299,9 +298,9 @@ export default function EventsPage() {
             </p>
           </div>
 
-          {/* Divider + initials + status on right */}
+          {/* Divider, initials, status on right */}
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
-            {/* Left: user avatar + name */}
+            {/* Left: user avatar, name */}
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-700">
                 {currentUserInitials}
@@ -311,7 +310,7 @@ export default function EventsPage() {
               </span>
             </div>
 
-            {/* Right: RSVP status icon + label */}
+            {/* Right: RSVP status icon, label */}
             <div className="flex items-center gap-2 text-slate-700">
               <StatusIcon className="h-5 w-5" />
               <span className="text-xs font-medium md:text-sm">
@@ -366,7 +365,7 @@ export default function EventsPage() {
               </button>
             )}
 
-            {/* Manage Events Toggle (blue as well) */}
+            {/* Manage Events Toggle */}
             <button
               type="button"
               onClick={() => setIsManaging(prev => !prev)}
