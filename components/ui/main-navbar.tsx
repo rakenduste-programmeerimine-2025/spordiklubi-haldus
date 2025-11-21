@@ -99,17 +99,14 @@ export function MainNavbar() {
                   </Link>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
-                    onClick={() => {
-                      console.log("switch team clicked")
-                      setMenuOpen(false)
-                    }}
+                   <Link
+                    href="/switch-team"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50"
+                    onClick={() => setMenuOpen(false)}
                   >
                     <Shuffle className="h-4 w-4" />
                     <span>Switch team</span>
-                  </button>
+                  </Link>
                 </li>
                 <li>
                   <button
