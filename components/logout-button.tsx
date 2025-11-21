@@ -1,17 +1,36 @@
-"use client";
+"use client"
 
-import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
-export function LogoutButton() {
-  const router = useRouter();
+interface LogoutButtonProps {
+  children: React.ReactNode
+  className?: string
+  onClick?: () => void
+}
 
-  const logout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/auth/login");
-  };
+export function LogoutButton({
+  children,
+  className = "",
+  onClick,
+}: LogoutButtonProps) {
+  const router = useRouter()
+  const supabase = createClient()
 
-  return <Button onClick={logout}>Logout</Button>;
+  const handleLogout = useCallback(async () => {
+    if (onClick) onClick()
+    await supabase.auth.signOut()
+    router.push("/auth/login")
+  }, [router, supabase, onClick])
+
+  return (
+    <button
+      type="button"
+      onClick={handleLogout}
+      className={className}
+    >
+      {children}
+    </button>
+  )
 }

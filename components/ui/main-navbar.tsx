@@ -1,9 +1,7 @@
 "use client"
 
-import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 import {
   Home,
   CalendarDays,
@@ -16,6 +14,9 @@ import {
   Shuffle,
 } from "lucide-react"
 import { motion } from "framer-motion"
+import { useState, useCallback } from "react"
+import { usePathname, useRouter } from "next/navigation"
+import { LogoutButton } from "../logout-button"
 
 const navItems = [
   { href: "/dashboard", label: "dashboard", icon: Home },
@@ -29,10 +30,6 @@ export function MainNavbar() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const toggleMenu = () => setMenuOpen(prev => !prev)
-
-  const handleLogout = () => {
-    console.log("logout clicked")
-  }
 
   return (
     <header className="w-full shadow-sm">
@@ -109,17 +106,10 @@ export function MainNavbar() {
                   </Link>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50"
-                    onClick={() => {
-                      handleLogout()
-                      setMenuOpen(false)
-                    }}
-                  >
+                  <LogoutButton className="flex w-full items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50">
                     <LogOut className="h-4 w-4" />
                     <span>Logout</span>
-                  </button>
+                  </LogoutButton>
                 </li>
               </ul>
             </div>
