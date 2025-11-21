@@ -6,12 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface GlassPanelProps
   extends Omit<React.ComponentPropsWithoutRef<typeof Card>, "title"> {
-  /** Heading displayed at the top (optional) */
   heading?: React.ReactNode
-  /** Additional classes for header and content */
   headerClassName?: string
   contentClassName?: string
-  /** Enables or disables the blue hover glow */
   withHoverGlow?: boolean
 }
 
@@ -27,7 +24,7 @@ export function GlassPanel({
   return (
     <Card
       className={cn(
-        "relative border-none rounded-3xl w-[75vw] max-w-[560px] min-h-[320px]",
+        "relative border-none rounded-3xl w-[75vw] max-w-[560px]",
         "bg-gradient-to-br from-blue-700/70 via-blue-600/60 to-blue-400/50",
         "backdrop-blur-[10px]",
         "ring-2 ring-inset ring-blue-400/60",

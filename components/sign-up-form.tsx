@@ -64,12 +64,12 @@ export function SignUpForm({
     >
       <GlassPanel heading="Create your account">
         <form onSubmit={handleSignUp}>
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4">
             {/* Full Name */}
             <div className="grid gap-1.5">
               <Label
                 htmlFor="full-name"
-                className="text-white/90 text-sm"
+                className="text-white/90"
               >
                 Full Name
               </Label>
@@ -80,8 +80,7 @@ export function SignUpForm({
                 required
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
-                className="bg-white/10 text-white placeholder:text-blue-100/70 border border-blue-300/40
-                 focus:border-blue-300 focus:ring-blue-300 rounded-lg h-10"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:ring-blue-400"
               />
             </div>
 
@@ -89,7 +88,7 @@ export function SignUpForm({
             <div className="grid gap-1.5">
               <Label
                 htmlFor="email"
-                className="text-white/90 text-sm"
+                className="text-white/90"
               >
                 Email
               </Label>
@@ -100,8 +99,7 @@ export function SignUpForm({
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="bg-white/10 text-white placeholder:text-blue-100/70 border border-blue-300/40
-                 focus:border-blue-300 focus:ring-blue-300 rounded-lg h-10"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:ring-blue-400"
               />
             </div>
 
@@ -109,7 +107,7 @@ export function SignUpForm({
             <div className="grid gap-1.5">
               <Label
                 htmlFor="password"
-                className="text-white/90 text-sm"
+                className="text-white/90"
               >
                 Password
               </Label>
@@ -119,8 +117,7 @@ export function SignUpForm({
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="bg-white/10 text-white placeholder:text-blue-100/70 border border-blue-300/40
-                 focus:border-blue-300 focus:ring-blue-300 rounded-lg h-10"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:ring-blue-400"
               />
             </div>
 
@@ -128,7 +125,7 @@ export function SignUpForm({
             <div className="grid gap-1.5">
               <Label
                 htmlFor="repeat-password"
-                className="text-white/90 text-sm"
+                className="text-white/90"
               >
                 Repeat Password
               </Label>
@@ -138,27 +135,27 @@ export function SignUpForm({
                 required
                 value={repeatPassword}
                 onChange={e => setRepeatPassword(e.target.value)}
-                className="bg-white/10 text-white placeholder:text-blue-100/70 border
-                 border-blue-300/40 focus:border-blue-300 focus:ring-blue-300 rounded-lg h-10"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:ring-blue-400"
               />
             </div>
 
             {/* Error */}
-            {error && <p className="text-xs text-red-300">{error}</p>}
+            {error && <p className="text-sm text-red-300">{error}</p>}
 
             {/* Submit button */}
             <SignupButton
               type="submit"
               isLoading={isLoading}
               label="Sign up"
+              className="mt-1"
             />
           </div>
 
-          <div className="mt-4 text-center text-base text-blue-100">
+          <div className="mt-5 text-center text-sm text-white/80">
             Already have an account?{" "}
             <Link
               href="/auth/login"
-              className="underline underline-offset-4 hover:text-blue-200"
+              className="underline underline-offset-4 text-blue-200 hover:text-blue-100"
             >
               Login
             </Link>

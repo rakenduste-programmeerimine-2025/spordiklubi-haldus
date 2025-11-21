@@ -25,7 +25,6 @@ export function ForgotPasswordForm({
     setError(null)
 
     try {
-      // The url which will be included in the email. This URL needs to be configured in your redirect URLs in the Supabase dashboard at https://supabase.com/dashboard/project/_/auth/url-configuration
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/update-password`,
       })
@@ -40,11 +39,23 @@ export function ForgotPasswordForm({
 
   if (success) {
     return (
-      <GlassPanel heading="Check your email">
-        <p className="text-white/90">
+      <GlassPanel
+        heading="Check your email"
+        className="min-h-0"
+      >
+        <p className="text-white/90 text-sm leading-relaxed">
           We’ve sent you a password reset link. Please check your inbox and
           follow the instructions to reset your password.
         </p>
+
+        <div className="mt-4 text-center text-sm text-white/80">
+          <Link
+            href="/auth/login"
+            className="underline underline-offset-4 text-blue-200 hover:text-blue-100"
+          >
+            Back to login
+          </Link>
+        </div>
       </GlassPanel>
     )
   }
@@ -54,12 +65,16 @@ export function ForgotPasswordForm({
       className={cn("flex flex-col items-center", className)}
       {...props}
     >
-      <GlassPanel heading="Reset password">
+      <GlassPanel
+        heading="Reset your password"
+        className="min-h-0"
+      >
         <form
           onSubmit={handleForgotPassword}
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-4"
         >
-          <div className="grid gap-2">
+          {/* Email */}
+          <div className="grid gap-1.5">
             <Label
               htmlFor="email"
               className="text-white/90"
@@ -79,14 +94,16 @@ export function ForgotPasswordForm({
 
           {error && <p className="text-sm text-red-300">{error}</p>}
 
+          {/* Submit button */}
           <SignupButton
             type="submit"
             label={isLoading ? "Sending..." : "Send reset link"}
             disabled={isLoading}
-            className="mt-2"
+            className="mt-1"
           />
 
-          <div className="mt-6 text-center text-sm text-white/80">
+          {/* Back to login */}
+          <div className="mt-1 text-center text-sm text-white/80">
             Remember your password?{" "}
             <Link
               href="/auth/login"
