@@ -9,6 +9,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { GlassPanel } from "@/components/ui/glasspanel"
+import { PasswordInfo } from "./password-info"
 
 export function SignUpForm({
   className,
@@ -18,18 +19,45 @@ export function SignUpForm({
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [repeatPassword, setRepeatPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string[] | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+
+  const validatePassword = (pw: string) => {
+    const errors: string[] = []
+    if (pw.length < 8) {
+      errors.push("Password must be at least 8 characters long.")
+    }
+    if (!/[A-Z]/.test(pw)) {
+      errors.push("Password must contain at least one uppercase letter.")
+    }
+    if (!/[0-9]/.test(pw)) {
+      errors.push("Password must contain at least one number.")
+    }
+    if (!/[^A-Za-z0-9]/.test(pw)) {
+      errors.push("Password must contain at least one special character.")
+    }
+    return errors.length > 0 ? errors : null
+  }
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const supabase = createClient()
     setIsLoading(true)
     setError(null)
+    const allErrors: string[] = []
 
     if (password !== repeatPassword) {
-      setError("Passwords do not match")
+      allErrors.push("Passwords do not match")
+    }
+
+    const passwordError = validatePassword(password)
+    if (passwordError) {
+      allErrors.push(...passwordError)
+    }
+
+    if (allErrors.length > 0) {
+      setError(allErrors)
       setIsLoading(false)
       return
     }
@@ -48,7 +76,7 @@ export function SignUpForm({
       if (error) throw error
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      setError(error instanceof Error ? [error.message] : ["An error occurred"])
     } finally {
       setIsLoading(false)
     }
@@ -107,12 +135,15 @@ export function SignUpForm({
 
             {/* Password */}
             <div className="grid gap-1.5">
-              <Label
-                htmlFor="password"
-                className="text-white/90 text-sm"
-              >
-                Password
-              </Label>
+              <div className="flex items-center gap-2">
+                <Label
+                  htmlFor="password"
+                  className="text-white/90 text-sm"
+                >
+                  Password
+                </Label>
+                <PasswordInfo />
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -144,7 +175,13 @@ export function SignUpForm({
             </div>
 
             {/* Error */}
-            {error && <p className="text-xs text-red-300">{error}</p>}
+            {error && (
+              <ul className="text-red-600 list-disc ml-5">
+                {error.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            )}
 
             {/* Submit button */}
             <SignupButton
