@@ -9,7 +9,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { GlassPanel } from "@/components/ui/glasspanel"
-
 export function LoginForm({
   className,
   ...props
@@ -32,6 +31,7 @@ export function LoginForm({
         password,
       })
       if (error) throw error
+      // Update this route to redirect to an authenticated route. The user already has an active session.
       router.push("/protected")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
@@ -48,11 +48,10 @@ export function LoginForm({
       <GlassPanel heading="Log in">
         <form
           onSubmit={handleLogin}
-          // was gap-6
           className="flex flex-col gap-4"
         >
           {/* Email */}
-          <div className="grid gap-1.5">
+          <div className="grid gap-2">
             <Label
               htmlFor="email"
               className="text-white/90"
@@ -71,7 +70,7 @@ export function LoginForm({
           </div>
 
           {/* Password */}
-          <div className="grid gap-1.5">
+          <div className="grid gap-2">
             <div className="flex items-center">
               <Label
                 htmlFor="password"
@@ -104,7 +103,7 @@ export function LoginForm({
             type="submit"
             label={isLoading ? "Logging in..." : "Sign in"}
             disabled={isLoading}
-            className="mt-1"
+            className="mt-2"
           />
 
           {/* Sign-up link */}

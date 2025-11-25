@@ -56,7 +56,7 @@ export default function Page() {
         {/* Form */}
         <div className="w-full flex justify-center -mt-0.5">
           <div className="w-full max-w-[360px]">
-            <LoginForm className="scale-[0.9] origin-top" />
+            <LoginForm className="origin-top" />
           </div>
         </div>
       </main>

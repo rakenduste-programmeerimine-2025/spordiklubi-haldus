@@ -50,7 +50,7 @@ export default function Page() {
         {/* Sign up form */}
         <div className="w-full flex justify-center -mt-0.5">
           <div className="w-full max-w-[360px]">
-            <SignUpForm className="scale-[0.9] origin-top" />
+            <SignUpForm className="origin-top" />
           </div>
         </div>
       </main>

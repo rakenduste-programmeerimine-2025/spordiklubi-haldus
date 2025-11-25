@@ -69,7 +69,7 @@ export function SignUpForm({
             <div className="grid gap-1.5">
               <Label
                 htmlFor="full-name"
-                className="text-white/90"
+                className="text-white/90 text-base"
               >
                 Full Name
               </Label>
@@ -88,7 +88,7 @@ export function SignUpForm({
             <div className="grid gap-1.5">
               <Label
                 htmlFor="email"
-                className="text-white/90"
+                className="text-white/90 text-base"
               >
                 Email
               </Label>
@@ -107,7 +107,7 @@ export function SignUpForm({
             <div className="grid gap-1.5">
               <Label
                 htmlFor="password"
-                className="text-white/90"
+                className="text-white/90 text-base"
               >
                 Password
               </Label>
@@ -125,7 +125,7 @@ export function SignUpForm({
             <div className="grid gap-1.5">
               <Label
                 htmlFor="repeat-password"
-                className="text-white/90"
+                className="text-white/90 text-base"
               >
                 Repeat Password
               </Label>

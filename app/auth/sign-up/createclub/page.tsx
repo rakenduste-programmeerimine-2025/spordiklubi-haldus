@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { Label } from "@/components/ui/label"
 import Image from "next/image"
 import GlassButton from "@/components/ui/backbutton"
 import { GlassPanel } from "@/components/ui/glasspanel"
@@ -120,7 +121,8 @@ export default function CreateClubPage() {
           >
             {/* Club name */}
             <div className="space-y-1.5">
-              <label className="block text-white/90 text-sm">Club name</label>
+              <Label className="block text-white/90 text-base">Club name</Label>
+
               <input
                 value={clubName}
                 onChange={e => setClubName(e.target.value)}
@@ -132,10 +134,10 @@ export default function CreateClubPage() {
             </div>
 
             {/* Logo uploader */}
-            <div className="space-y-1.5">
-              <label className="block text-white/90 text-sm">
+            <div className="space-y-1">
+              <Label className="block text-white/90 text-base">
                 Club logo (optional)
-              </label>
+              </Label>
 
               <div className="flex items-center gap-3">
                 {/* Icon tile upload icon on left */}
@@ -156,7 +158,7 @@ export default function CreateClubPage() {
                       hover:bg-white/15 transition duration-200"
                   >
                     <span className="truncate text-white/80 text-base">
-                      {file ? file.name : "Choose file — no file chosen"}
+                      {file ? file.name : "Choose file - no file chosen"}
                     </span>
                     <span
                       className="shrink-0 px-4 py-2 text-sm font-medium rounded-full
@@ -179,7 +181,7 @@ export default function CreateClubPage() {
                   />
 
                   <p className="mt-1 text-white/70 text-xs">
-                    PNG, JPG, or SVG — max 5MB
+                    PNG, JPG, or SVG - max 5MB
                   </p>
                 </div>
               </div>
