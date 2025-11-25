@@ -54,6 +54,9 @@ export default function RolePage() {
           <h1 className="text-white text-4xl md:text-5xl font-bold leading-tight">
             Join SportSync
           </h1>
+          <p className="text-white/80 mt-1 text-xl">
+            Choose how you’ll use SportSync
+          </p>
         </div>
 
         {/* GlassPanel */}
@@ -64,10 +67,7 @@ export default function RolePage() {
           heading={
             <div className="text-left">
               <div className="text-white text-2xl font-semibold">
-                Choose your role
-              </div>
-              <div className="text-white/80 text-sm mt-1">
-                Select how you’ll use SportSync
+                Select your role
               </div>
             </div>
           }
@@ -108,7 +108,7 @@ function RoleButton({
   onClick: () => void
 }) {
   const base =
-    "w-full text-left flex items-center gap-4 px-5 py-3.5 rounded-2xl " +
+    "w-full text-left flex items-center gap-1 pl-1 pr-4 py-3.5 rounded-2xl " +
     "transition-[transform,background,box-shadow] duration-200 shadow-md " +
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 " +
     "hover:scale-[0.995] active:scale-[0.985]"
@@ -124,18 +124,20 @@ function RoleButton({
       onClick={onClick}
       aria-label={label}
     >
-      <div className="flex items-center justify-center w-45 h-35 rounded-full">
+      <div className="w-14 h-14 shrink-0 flex items-center justify-start">
         <Image
           src={iconSrc}
           alt={`${label} icon`}
-          width={95}
+          width={60}
           height={60}
           className="object-contain"
         />
       </div>
-      <div className="text-white">
-        <div className="font-semibold text-lg leading-tight">{label}</div>
-        <div className="text-white/90 text-sm leading-snug">{description}</div>
+      <div className="text-white flex flex-col">
+        <span className="font-semibold text-lg leading-tight">{label}</span>
+        <span className="text-white/90 text-sm leading-snug">
+          {description}
+        </span>
       </div>
     </button>
   )

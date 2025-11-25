@@ -48,7 +48,7 @@ export function LoginForm({
       <GlassPanel heading="Log in">
         <form
           onSubmit={handleLogin}
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-4"
         >
           {/* Email */}
           <div className="grid gap-2">
@@ -107,7 +107,7 @@ export function LoginForm({
           />
 
           {/* Sign-up link */}
-          <div className="mt-6 text-center text-sm text-white/80">
+          <div className="mt-1 text-center text-sm text-white/80">
             Don’t have an account?{" "}
             <Link
               href="/auth/sign-up"
