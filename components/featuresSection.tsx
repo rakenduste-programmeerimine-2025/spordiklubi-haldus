@@ -23,15 +23,18 @@ const cardBase =
 
 export default function FeaturesSection() {
   return (
-    <section className="relative z-10 flex flex-col items-center justify-center py-12 w-full">
-      <GlassPanel className="pt-3 h-[100px] w-[60vw] max-w-4xl text-center">
-        <h2 className="text-5xl font-semibold text-white tracking-tight">
+    <section
+      id="features"
+      className="relative z-10 flex flex-col items-center justify-center py-2 md:py-4 lg:py-6 w-full"
+    >
+      <GlassPanel className="pt-3 h-[100px] w-[70vw] max-w-4xl text-center">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white tracking-tight">
           Powerful Features
         </h2>
       </GlassPanel>
 
-      <div className="mt-16 flex w-full justify-center">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 max-w-4xl w-full justify-items-center">
+      <div className="mt-10 md:mt-12 flex w-full justify-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10 max-w-4xl w-full justify-items-center">
           <FeatureCard
             gradient="from-orange-700/60 via-orange-500/40 to-yellow-400/30"
             Icon={CalendarDays}
@@ -80,11 +83,8 @@ function FeatureCard({
       {...idleFloat}
     >
       <div className={`${cardBase} bg-gradient-to-br ${gradient}`}>
-        {/* ICONS: same size, same margin, no circle */}
         <Icon className="h-14 w-14 text-white mb-4" />
-
         <h3 className="text-2xl font-semibold text-white mb-2">{title}</h3>
-
         <p className="text-white/80 text-sm max-w-[250px]">{text}</p>
       </div>
     </motion.div>

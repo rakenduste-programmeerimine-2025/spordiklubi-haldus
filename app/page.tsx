@@ -35,12 +35,11 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-black/40" />
       </div>
 
-      {/* Main content – hero fully visible on first load */}
       <Navbar />
 
-      <main className="mx-auto max-w-6xl px-4 pt-16 pb-10 space-y-16">
+      <main className="mx-auto max-w-6xl px-4 pt-10 md:pt-12 pb-10 space-y-10 md:space-y-14">
         {/* HERO */}
-        <section className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+        <section className="flex items-center justify-center py-8 md:py-10 lg:py-12">
           <HeroSection />
         </section>
 

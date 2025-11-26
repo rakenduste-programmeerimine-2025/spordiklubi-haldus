@@ -11,7 +11,6 @@ export default function Navbar() {
 
   useEffect(() => {
     const onScroll = () => {
-      // visible at top, fades out after scrolling down a bit
       setVisible(window.scrollY < 30)
     }
 
@@ -26,8 +25,10 @@ export default function Navbar() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="
         fixed top-0 left-0 w-full z-50
-        px-8 py-4
-        flex justify-between items-center
+        flex items-center justify-between
+        px-4 py-3
+        sm:px-6 sm:py-3.5
+        lg:px-8 lg:py-4
         bg-transparent backdrop-blur-sm
       "
     >
@@ -39,18 +40,24 @@ export default function Navbar() {
           width={50}
           height={50}
           priority
-          className="h-12 w-auto"
+          className="h-9 w-auto sm:h-10 md:h-11 lg:h-12"
         />
-        <span className="text-white font-bold text-3xl ml-2">SPORTSYNC</span>
+        <span className="text-white font-bold ml-2 text-xl sm:text-2xl lg:text-3xl">
+          SPORTSYNC
+        </span>
       </div>
 
       {/* Buttons */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
         <Link href="/auth/login">
-          <GlassButton className="px-6 py-2 text-lg">Login</GlassButton>
+          <GlassButton className="px-4 py-1.5 text-sm sm:px-5 sm:py-2 sm:text-base lg:px-6 lg:py-2 lg:text-lg">
+            Login
+          </GlassButton>
         </Link>
         <Link href="/auth/sign-up">
-          <GlassButton className="px-6 py-2 text-lg">Sign up</GlassButton>
+          <GlassButton className="px-4 py-1.5 text-sm sm:px-5 sm:py-2 sm:text-base lg:px-6 lg:py-2 lg:text-lg">
+            Sign up
+          </GlassButton>
         </Link>
       </div>
     </motion.nav>
