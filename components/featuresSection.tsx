@@ -1,25 +1,14 @@
 "use client"
 
-import { motion } from "framer-motion"
 import { CalendarDays, BarChart3, Users, ClipboardList } from "lucide-react"
-import { GlassPanel } from "./ui/glasspanel"
+import { GlassPanelStatic } from "./ui/glasspanel-static"
 
-const easeInOutCurve = [0.42, 0, 0.58, 1] as [number, number, number, number]
-
-const idleFloat = {
-  animate: {
-    y: [0, -6, 0],
-    transition: {
-      duration: 4,
-      repeat: Infinity,
-      ease: easeInOutCurve,
-    },
-  },
-}
-
+// Base card styling (no white background, gradient is background)
 const cardBase =
-  "w-80 min-h-[260px] px-6 py-8 rounded-3xl flex flex-col items-center justify-start text-center " +
-  "border border-white/20 shadow-2xl backdrop-blur-2xl bg-white/10 transition-all"
+  "relative overflow-hidden w-80 2xl:w-96 min-h-[260px] 2xl:min-h-[320px] " +
+  "rounded-3xl text-center border border-white/20 shadow-2xl " +
+  "transform transition-transform duration-150 hover:scale-[1.02] " +
+  "flex flex-col items-center justify-start px-6 2xl:px-8 py-8 2xl:py-10"
 
 export default function FeaturesSection() {
   return (
@@ -27,34 +16,38 @@ export default function FeaturesSection() {
       id="features"
       className="relative z-10 flex flex-col items-center justify-center py-2 md:py-4 lg:py-6 w-full"
     >
-      <GlassPanel className="pt-3 h-[100px] w-[70vw] max-w-4xl text-center">
-        <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white tracking-tight">
+      {/* ⭐ STATIC PANEL (no fade, no blur, loads instantly) */}
+      <GlassPanelStatic className="pt-3 h-[100px] 2xl:h-[110px] w-[70vw] max-w-4xl 2xl:max-w-5xl 2xl:-mt-10 text-center">
+        <h2 className="text-3xl md:text-4xl lg:text-5xl 2xl:text-6xl font-semibold text-white tracking-tight">
           Powerful Features
         </h2>
-      </GlassPanel>
+      </GlassPanelStatic>
 
       <div className="mt-10 md:mt-12 flex w-full justify-center">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10 max-w-4xl w-full justify-items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10 2xl:gap-14 max-w-4xl w-full justify-items-center">
           <FeatureCard
-            gradient="from-orange-700/60 via-orange-500/40 to-yellow-400/30"
+            gradient="from-orange-700/80 via-orange-500/60 to-yellow-400/50"
             Icon={CalendarDays}
             title="Smart Scheduling"
             text="Create training sessions and games effortlessly. Everything updates instantly in your team calendar."
           />
+
           <FeatureCard
-            gradient="from-purple-700/60 via-purple-500/40 to-pink-400/30"
+            gradient="from-purple-700/80 via-purple-500/60 to-pink-400/50"
             Icon={ClipboardList}
             title="Event RSVP"
             text="See who’s coming or skipping and plan sessions confidently with live attendance responses."
           />
+
           <FeatureCard
-            gradient="from-blue-700/60 via-blue-500/40 to-sky-400/30"
+            gradient="from-blue-700/80 via-blue-500/60 to-sky-400/50"
             Icon={BarChart3}
             title="Performance Dashboard"
             text="Track attendance, engagement, and monthly activity trends - all in one clear dashboard."
           />
+
           <FeatureCard
-            gradient="from-green-700/60 via-green-500/40 to-green-300/30"
+            gradient="from-green-700/80 via-green-500/60 to-green-300/50"
             Icon={Users}
             title="Team Communication"
             text="Share announcements, coordinate transportation, and keep your team updated in the forum."
@@ -77,16 +70,16 @@ function FeatureCard({
   text: string
 }) {
   return (
-    <motion.div
-      whileHover={{ scale: 1.05, rotate: 0.4 }}
-      transition={{ type: "spring", stiffness: 140 }}
-      {...idleFloat}
-    >
-      <div className={`${cardBase} bg-gradient-to-br ${gradient}`}>
-        <Icon className="h-14 w-14 text-white mb-4" />
-        <h3 className="text-2xl font-semibold text-white mb-2">{title}</h3>
-        <p className="text-white/80 text-sm max-w-[250px]">{text}</p>
-      </div>
-    </motion.div>
+    <div className={`${cardBase} bg-gradient-to-br ${gradient}`}>
+      <Icon className="relative z-10 h-14 w-14 2xl:h-20 2xl:w-20 text-white mb-4 mx-auto" />
+
+      <h3 className="relative z-10 text-2xl 2xl:text-3xl font-semibold text-white mb-2">
+        {title}
+      </h3>
+
+      <p className="relative z-10 text-white/90 text-sm 2xl:text-base max-w-[250px] 2xl:max-w-[300px] mx-auto">
+        {text}
+      </p>
+    </div>
   )
 }

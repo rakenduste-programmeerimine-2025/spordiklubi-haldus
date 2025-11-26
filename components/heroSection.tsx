@@ -42,18 +42,18 @@ export default function HeroSection() {
   return (
     <section className="flex flex-col items-center justify-center text-center px-4">
       {/* LOGO + TITLE */}
-      <div className="flex flex-col items-center justify-center pb-10 -mt-4 sm:-mt-6 md:-mt-8 lg:-mt-10">
+      <div className="flex flex-col items-center justify-center pb-10 -mt-4 sm:-mt-6 md:-mt-6 lg:-mt-6 2xl:pb-16 2xl:-mt-12">
         <div className="mb-2">
           <Image
             src="/images/syncc.png"
             alt="SPORTSYNC logo"
             width={150}
             height={150}
-            className="h-40 md:h-44 lg:h-48 w-auto"
+            className="h-40 md:h-44 lg:h-48 2xl:h-60 w-auto"
             priority
           />
         </div>
-        <h1 className="text-white text-4xl md:text-5xl lg:text-5xl font-bold tracking-tight -mt-1">
+        <h1 className="text-white text-4xl md:text-5xl lg:text-5xl 2xl:text-6xl font-bold tracking-tight -mt-4 2xl:-mt-5">
           SPORTSYNC
         </h1>
       </div>
@@ -64,21 +64,21 @@ export default function HeroSection() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        <GlassPanel className="px-6 py-6 md:px-8 md:py-8 max-w-xl">
-          <h1 className="text-white text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight mb-6 md:mb-8">
+        <GlassPanel className="px-6 py-6 md:px-8 md:py-6 max-w-xl 2xl:px-12 2xl:py-12 2xl:max-w-3xl">
+          <h1 className="text-white text-3xl md:text-4xl lg:text-5xl 2xl:text-6xl font-semibold leading-tight mb-6 2xl:max-w-xl mx-auto md:mb-8 2xl:mb-6">
             Manage Your Sports Team <br />
             <span className="font-extrabold">
               Like a <span className="text-[#f4d77c]">Champion</span>
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-white/90 mb-6 md:mb-8 max-w-md mx-auto">
+          <p className="text-lg md:text-xl 2xl:text-2xl text-white/90 mb-6 md:mb-8 2xl:mb-6 max-w-xl mx-auto">
             All-in-one platform to organize teams, schedule matches, and track
             performance.
           </p>
 
           <Link href="/auth/sign-up">
-            <GlassButton className="px-7 py-3 text-lg md:text-xl">
+            <GlassButton className="px-7 py-3 text-lg md:text-xl 2xl:px-10 2xl:py-4 2xl:text-2xl xl:mt-4">
               Get Started
             </GlassButton>
           </Link>
@@ -90,7 +90,7 @@ export default function HeroSection() {
         initial={false}
         animate={{ opacity: showArrow ? 1 : 0 }}
         transition={{ duration: 0.3 }}
-        className="mt- md:mt-1 lg:mt-2 cursor-pointer"
+        className="mt-0 md:mt-1 lg:mt-2 2xl:mt-6 cursor-pointer"
         style={{ pointerEvents: showArrow ? "auto" : "none" }}
         onClick={() => {
           const section = document.getElementById("features")

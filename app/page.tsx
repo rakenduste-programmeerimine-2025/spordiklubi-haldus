@@ -39,7 +39,7 @@ export default function LandingPage() {
 
       <main className="mx-auto max-w-6xl px-4 pt-10 md:pt-12 pb-10 space-y-10 md:space-y-14">
         {/* HERO */}
-        <section className="flex items-center justify-center py-8 md:py-10 lg:py-12">
+        <section className="flex items-center justify-center py-8 md:py-10 lg:py-12 2xl:min-h-screen">
           <HeroSection />
         </section>
 
