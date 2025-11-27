@@ -14,6 +14,7 @@ export default function ForumPage() {
     search: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   async function loadPosts(currentFilters: ForumFilters) {
     setIsLoading(true)
@@ -22,6 +23,16 @@ export default function ForumPage() {
       setPosts(data)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  async function refreshPosts() {
+    setIsRefreshing(true)
+    try {
+      const data = await forumApi.getPosts(filters)
+      setPosts(data)
+    } finally {
+      setIsRefreshing(false)
     }
   }
 
@@ -39,6 +50,7 @@ export default function ForumPage() {
           onSubmit={async (data) => {
             const newPost = await forumApi.createPost(data)
             setPosts((prev) => [newPost, ...prev])
+            refreshPosts()
           }}
         />
       </section>
@@ -67,10 +79,16 @@ export default function ForumPage() {
                   p.id === post.id ? { ...p, replies: [...p.replies, reply] } : p
                 )
               )
+              refreshPosts()
             }}
           />
         ))}
       </div>
+      {isRefreshing && (
+        <p className="text-xs text-gray-400 text-center">
+          Updating...
+          </p>
+      )}
     </div>
   )
 }
