@@ -1,5 +1,6 @@
 "use client"
 
+import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import { CreatePostForm } from "@/components/forum/create-post-form"
 import { FilterBar } from "@/components/forum/filter-bar"
@@ -39,6 +40,74 @@ export default function ForumPage() {
   useEffect(() => {
     loadPosts(filters)
   }, [filters])
+
+  useEffect(() => {
+  const supabase = createClient()
+
+  const channel = supabase
+    .channel("forum-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "forum_post",
+      },
+      (payload) => {
+        const newPost = payload.new
+
+        setPosts((prev) => [
+          {
+            id: newPost.id,
+            title: newPost.title,
+            message: newPost.content,
+            category: newPost.category,
+            createdAt: new Date(newPost.created_at).toLocaleString(),
+            authorName: "Unknown",
+            authorInitials: "U",
+            replies: [],
+          },
+          ...prev,
+        ])
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "forum_comment",
+      },
+      (payload) => {
+        const reply = payload.new
+
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === reply.forum_post_id
+              ? {
+                  ...post,
+                  replies: [
+                    ...post.replies,
+                    {
+                      id: reply.id,
+                      message: reply.content,
+                      createdAt: new Date(reply.created_at).toLocaleString(),
+                      authorName: "Unknown",
+                      authorInitials: "U",
+                    },
+                  ],
+                }
+              : post
+          )
+        )
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [])
 
   return (
     <div className="space-y-4">
