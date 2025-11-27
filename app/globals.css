@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  /* ensure it fills the screen and scroll */
+  min-height: 100vh;
+
+  /* your background image */
+  background-image: url("/images/landingpicture.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  /* optional: keep it fixed for a subtle parallax feeling */
+  background-attachment: fixed;
+
+  /* text color default */
+  color: #ffffff;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

@@ -28,7 +28,9 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
     >
-      <body className={`${poppins.className} antialiased`}>
+      <body
+        className={`${poppins.className} antialiased min-h-screen overflow-x-hidden`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
