@@ -63,7 +63,7 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: user, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -74,9 +74,20 @@ export function SignUpForm({
         },
       })
       if (error) throw error
+      if (user) {
+        const { error: profileError } = await supabase.from("profile").insert({
+          id: user.user?.id,
+          email: user.user?.email,
+          name: fullName,
+          role_id: 1,
+        })
+
+        if (profileError) throw profileError
+      }
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
       setError(error instanceof Error ? [error.message] : ["An error occurred"])
+      console.log(error)
     } finally {
       setIsLoading(false)
     }
@@ -133,12 +144,15 @@ export function SignUpForm({
 
             {/* Password */}
             <div className="grid gap-1.5">
-              <Label
-                htmlFor="password"
-                className="text-white/90 text-base"
-              >
-                Password
-              </Label>
+              <div className="flex">
+                <Label
+                  htmlFor="password"
+                  className="text-white/90 text-base"
+                >
+                  Password
+                </Label>
+                <PasswordInfo />
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -168,7 +182,15 @@ export function SignUpForm({
             </div>
 
             {/* Error */}
-            {error && <p className="text-sm text-red-300">{error}</p>}
+            {error &&
+              error.map((error, i) => (
+                <p
+                  key={i}
+                  className="text-sm text-red-300"
+                >
+                  {error}
+                </p>
+              ))}
 
             {/* Submit button */}
             <SignupButton
