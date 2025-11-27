@@ -7,15 +7,14 @@ import {
   CalendarDays,
   ClipboardList,
   MessageCircle,
-  RotateCcw,
   ChevronDown,
   LogOut,
   Settings,
   Shuffle,
 } from "lucide-react"
 import { motion } from "framer-motion"
-import { useState, useCallback } from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { useState } from "react" //useCallback inside brackets
+import { usePathname } from "next/navigation" // useRouter inside brackets
 import { LogoutButton } from "../logout-button"
 
 const navItems = [
@@ -37,33 +36,22 @@ export function MainNavbar() {
       <div className="flex items-center justify-between px-6 py-4 md:py-5 bg-[#2563EB] text-white">
         {/* Left: logo, club name */}
         <div className="flex items-center gap-3">
-          <div className="relative h-12 w-12 rounded-full overflow-hidden bg-white/10">
+          <div className="relative h-14 w-14 rounded-full overflow-hidden">
             <Image
-              src="/images/kure.jpg"
+              src="/images/kuressaare.png"
               fill
               alt="Club logo"
             />
           </div>
           <div className="leading-tight">
-            <p className="font-semibold text-sm sm:text-base md:text-lg">
+            <p className="font-semibold text-sm sm:text-base md:text-2xl">
               FC Kuressaare U10
-            </p>
-            <p className="text-xs sm:text-sm text-white/80">
-              Sports Club Management
             </p>
           </div>
         </div>
 
         {/* Right: refresh, role, user, dropdown */}
         <div className="relative flex items-center gap-4">
-          <button
-            type="button"
-            className="rounded-full p-2 bg-white/10 hover:bg-white/20 transition"
-            aria-label="Refresh"
-          >
-            <RotateCcw className="h-4 w-4 md:h-5 md:w-5" />
-          </button>
-
           <button
             type="button"
             onClick={toggleMenu}
@@ -96,7 +84,7 @@ export function MainNavbar() {
                   </Link>
                 </li>
                 <li>
-                   <Link
+                  <Link
                     href="/switch-team"
                     className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50"
                     onClick={() => setMenuOpen(false)}
