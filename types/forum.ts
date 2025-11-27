@@ -1,4 +1,8 @@
-export type ForumCategory = "announcement" | "training" | "transport" | "general"
+export type ForumCategory =
+  | "announcement"
+  | "training"
+  | "transport"
+  | "general"
 
 export type ForumReply = {
   id: string
@@ -10,6 +14,7 @@ export type ForumReply = {
 
 export type ForumPost = {
   id: string
+  title: string
   authorName: string
   authorInitials: string
   createdAt: string
