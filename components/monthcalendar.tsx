@@ -15,7 +15,7 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 type ClubEvent = {
-  date: string // e.g. "2025-10-18"
+  date: string
 }
 
 type MonthCalendarProps = {
@@ -52,8 +52,8 @@ export function MonthCalendar({
   const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
   return (
-    <div className="rounded-[32px] bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,.08)] border border-slate-100">
-      {/* Header: month + arrows */}
+    <div className="rounded-[32px] bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,.08)] border border-slate-100">
+      {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <button
           type="button"
@@ -63,7 +63,7 @@ export function MonthCalendar({
           <ChevronLeft className="h-4 w-4" />
         </button>
 
-        <div className="text-sm font-semibold text-slate-900 tracking-wide">
+        <div className="text-lg font-semibold text-slate-900 tracking-wide">
           {format(currentMonth, "MMMM yyyy")}
         </div>
 
@@ -77,7 +77,7 @@ export function MonthCalendar({
       </div>
 
       {/* Weekday row */}
-      <div className="mb-2 grid grid-cols-7 text-center text-xs text-slate-400">
+      <div className="mb-2 grid grid-cols-7 text-center text-sm text-slate-400">
         {weekdayLabels.map(d => (
           <div key={d}>{d}</div>
         ))}
@@ -92,24 +92,20 @@ export function MonthCalendar({
           const showEventDot = hasEventsOn(day)
 
           let circleClasses =
-            "relative flex h-9 w-9 items-center justify-center rounded-full text-xs transition transform"
+            "relative flex h-10 w-10 items-center justify-center rounded-full text-sm transition transform"
 
-          if (!inMonth) {
-            circleClasses += " text-slate-300"
-          } else {
-            circleClasses += " text-slate-700"
-          }
+          if (!inMonth) circleClasses += " text-slate-300"
+          else circleClasses += " text-slate-700"
 
-          if (isSelected) {
+          if (isSelected)
             circleClasses +=
               " bg-blue-600 text-white shadow-[0_10px_25px_rgba(37,99,235,.45)] scale-[1.02]"
-          } else if (isToday) {
+          else if (isToday)
             circleClasses +=
               " bg-white text-blue-700 ring-1 ring-blue-400/70 shadow-[0_0_0_1px_rgba(96,165,250,.4)]"
-          } else if (inMonth) {
+          else if (inMonth)
             circleClasses +=
               " hover:bg-white/80 hover:shadow-[0_6px_16px_rgba(148,163,184,.35)] hover:-translate-y-0.5"
-          }
 
           return (
             <button
