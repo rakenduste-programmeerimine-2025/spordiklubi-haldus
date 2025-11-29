@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import Image from "next/image"
 import GlassButton from "@/components/ui/backbutton"
 import { GlassPanel } from "@/components/ui/glasspanel"
@@ -11,10 +12,42 @@ type Role = "coach" | "player"
 export default function RolePage() {
   const router = useRouter()
 
-  const handleSelect = (role: Role) => {
+  const handleSelect = async (role: Role) => {
     sessionStorage.setItem("signup_role", role)
+    const supabase = await createClient()
+    const { data: roles, error: roleError } = await supabase
+      .from("role")
+      .select("id")
+      .eq("name", role)
+      .single()
+
+    if (roleError) {
+      console.error(roleError)
+      return
+    }
+    const roleId = roles.id
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
+    if (!user) {
+      console.error("No logged-in user")
+      return
+    }
+
+    const { error: updateError, data: updatedProfile } = await supabase
+      .from("profile")
+      .update({ role_id: roleId })
+      .eq("id", user.id)
+
+    if (updateError) {
+      console.error(updateError)
+      return
+    }
+
     router.push(
-      role === "coach" ? "/auth/sign-up/createclub" : "/auth/sign-up/done",
+      role === "coach" ? "/auth/sign-up/createclub" : "/auth/sign-up-success",
     )
   }
 
