@@ -10,6 +10,11 @@ export default function SettingsPage() {
   const searchParams = useSearchParams()
 
   const tab = searchParams.get("tab") || "personal"
+  const clubId = searchParams.get("clubId")
+
+  if (!clubId) {
+    return
+  }
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -18,7 +23,7 @@ export default function SettingsPage() {
       <SettingsTabs isCoach={isCoach} />
 
       {tab === "personal" && <PersonalSettings />}
-      {tab === "club" && isCoach && <ClubSettings />}
+      {tab === "club" && isCoach && <ClubSettings clubId={clubId} />}
     </div>
   )
 }
