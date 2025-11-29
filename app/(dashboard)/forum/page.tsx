@@ -1,5 +1,6 @@
 "use client"
 
+import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import { CreatePostForm } from "@/components/forum/create-post-form"
 import { FilterBar } from "@/components/forum/filter-bar"
@@ -14,6 +15,7 @@ export default function ForumPage() {
     search: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   async function loadPosts(currentFilters: ForumFilters) {
     setIsLoading(true)
@@ -25,9 +27,87 @@ export default function ForumPage() {
     }
   }
 
+  async function refreshPosts() {
+    setIsRefreshing(true)
+    try {
+      const data = await forumApi.getPosts(filters)
+      setPosts(data)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   useEffect(() => {
     loadPosts(filters)
   }, [filters])
+
+  useEffect(() => {
+  const supabase = createClient()
+
+  const channel = supabase
+    .channel("forum-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "forum_post",
+      },
+      (payload) => {
+        const newPost = payload.new
+
+        setPosts((prev) => [
+          {
+            id: newPost.id,
+            title: newPost.title,
+            message: newPost.content,
+            category: newPost.category,
+            createdAt: new Date(newPost.created_at).toLocaleString(),
+            authorName: "Unknown",
+            authorInitials: "U",
+            replies: [],
+          },
+          ...prev,
+        ])
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "forum_comment",
+      },
+      (payload) => {
+        const reply = payload.new
+
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === reply.forum_post_id
+              ? {
+                  ...post,
+                  replies: [
+                    ...post.replies,
+                    {
+                      id: reply.id,
+                      message: reply.content,
+                      createdAt: new Date(reply.created_at).toLocaleString(),
+                      authorName: "Unknown",
+                      authorInitials: "U",
+                    },
+                  ],
+                }
+              : post
+          )
+        )
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [])
 
   return (
     <div className="space-y-4">
@@ -39,6 +119,7 @@ export default function ForumPage() {
           onSubmit={async (data) => {
             const newPost = await forumApi.createPost(data)
             setPosts((prev) => [newPost, ...prev])
+            refreshPosts()
           }}
         />
       </section>
@@ -67,10 +148,16 @@ export default function ForumPage() {
                   p.id === post.id ? { ...p, replies: [...p.replies, reply] } : p
                 )
               )
+              refreshPosts()
             }}
           />
         ))}
       </div>
+      {isRefreshing && (
+        <p className="text-xs text-gray-400 text-center">
+          Updating...
+          </p>
+      )}
     </div>
   )
 }

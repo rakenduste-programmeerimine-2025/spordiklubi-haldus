@@ -3,12 +3,14 @@
 import { useState } from "react"
 
 type CreatePostFormProps = {
-  onSubmit: (data: { category: string; message: string }) => Promise<void> | void
+  onSubmit: (data: { title: string; category: string; message: string }) => Promise<void> | void
 }
 
 const categories = ["General", "Announcement", "Training", "Transport"]
 
+
 export function CreatePostForm({ onSubmit }: CreatePostFormProps) {
+  const [title, setTitle] = useState("")
   const [category, setCategory] = useState("General")
   const [message, setMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -19,7 +21,7 @@ export function CreatePostForm({ onSubmit }: CreatePostFormProps) {
 
     try {
       setIsSubmitting(true)
-      await onSubmit({ category, message })
+      await onSubmit({ title, category, message })
       setMessage("")
     } finally {
       setIsSubmitting(false)
@@ -45,7 +47,16 @@ export function CreatePostForm({ onSubmit }: CreatePostFormProps) {
           ))}
         </select>
       </div>
-
+      <div className="space-y-2">
+        <p className="text-sm text-gray-900 font-semibold">Title</p>
+        <input
+          type="text"
+          className="w-full rounded-full bg-[#f2f2f5] px-4 py-2 text-sm text-gray-700 outline-none"
+          placeholder="Post title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </div>
       <textarea
         className="min-h-[80px] w-full resize-none rounded-3xl bg-[#f2f2f5] px-4 py-3 text-sm text-gray-700 outline-none"
         placeholder="What’s on your mind?"

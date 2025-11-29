@@ -33,6 +33,8 @@ export function ForumPostCard({ post, onReply }: ForumPostCardProps) {
         </div>
       </header>
 
+      <h2 className="mt-3 text-lg font-semibold text-gray-900">{post.title}</h2>
+      
       <p className="mt-4 text-sm text-gray-800">{post.message}</p>
 
       <button
