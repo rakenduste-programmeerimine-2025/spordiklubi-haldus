@@ -8,6 +8,7 @@ import GlassButton from "@/components/ui/backbutton"
 import { GlassPanel } from "@/components/ui/glasspanel"
 //import { UploadCloud } from "lucide-react"
 import { SignupButton } from "@/components/ui/signupbutton"
+import { createClient } from "@/lib/supabase/client"
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024
 const ACCEPT = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml"]
@@ -47,14 +48,45 @@ export default function CreateClubPage() {
       setError("Please enter a club name.")
       return
     }
+    const supabase = await createClient()
+    const slug = clubName.trim().toLowerCase().replace(/\s+/g, "-")
 
-    setError(null)
+    try {
+      const { data: newClub, error } = await supabase
+        .from("club")
+        .insert({
+          name: clubName,
+          club_logo: file,
+          slug: slug,
+        })
+        .select()
+      if (error) throw error
+      console.log("club created: ", newClub)
+
+      const clubId = newClub[0].id
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error("No logged-in user")
+
+      const { error: memberError } = await supabase.from("member").insert({
+        profile_id: user.id,
+        club_id: clubId,
+      })
+      if (memberError) throw memberError
+    } catch (err) {
+      console.error("Failed to create club:", err)
+      setError("failed to create a club")
+      return
+    }
+
     setLoading(true)
     sessionStorage.setItem("signup_club_name", clubName.trim())
 
     setTimeout(() => {
       setLoading(false)
-      router.push("/auth/sign-up/done")
+      router.push("/auth/sign-up-success")
     }, 1000)
   }
 
