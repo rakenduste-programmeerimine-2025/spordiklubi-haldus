@@ -6,13 +6,52 @@ import type {
   ForumFilters,
 } from "@/types/forum"
 
-// Helper to find user's club_id
-async function getUserClubId(userId: string) {
+type ForumProfileRef = {
+  id: string
+  name: string | null
+  email: string | null
+} | null
+
+type ForumCommentRow = {
+  id: number
+  content: string
+  created_at: string
+  profile: ForumProfileRef
+}
+
+type ForumPostRow = {
+  id: number
+  title: string | null
+  content: string
+  category: string
+  created_at: string
+  profile: ForumProfileRef
+  comments?: ForumCommentRow[] | null
+}
+
+type NewPostRow = {
+  id: number
+  title: string
+  content: string
+  category: string
+  created_at: string
+  profile: ForumProfileRef
+}
+
+type NewCommentRow = {
+  id: number
+  content: string
+  created_at: string
+  profile: ForumProfileRef
+}
+
+async function getUserClubId(profileId: string) {
   const supabase = createClient()
+
   const { data, error } = await supabase
     .from("member")
     .select("club_id")
-    .eq("user_id", userId)
+    .eq("profile_id", profileId)
     .single()
 
   if (error) {
@@ -20,7 +59,7 @@ async function getUserClubId(userId: string) {
     throw new Error("Could not determine user's club")
   }
 
-  return data.club_id
+  return data.club_id as number
 }
 
 export const forumApi = {
@@ -29,144 +68,212 @@ export const forumApi = {
 
     let query = supabase
       .from("forum_post")
-      .select(`id, title, content, category, created_at, user_id, club_id`)
+      .select(
+        `
+        id,
+        title,
+        content,
+        category,
+        created_at,
+        profile:profile_id (
+          id,
+          name,
+          email
+        ),
+        comments:forum_comment (
+          id,
+          content,
+          created_at,
+          profile:profile_id (
+            id,
+            name,
+            email
+          )
+        )
+      `
+      )
       .order("created_at", { ascending: false })
 
     if (filters.category !== "all") {
-      query = query.eq("category", filters.category)
+      query = query.eq("category", filters.category.toLowerCase())
     }
 
-    if (filters.search.trim() !== "") {
-      query = query.ilike("content", `%${filters.search}%`)
+    const search = filters.search.trim()
+    if (search !== "") {
+      query = query.or(
+        `title.ilike.%${search}%,content.ilike.%${search}%`
+      )
     }
 
-    const { data: posts, error } = await query
+    const { data, error } = await query
     if (error) throw error
 
-    // Load comments for all posts
-    const { data: comments } = await supabase
-      .from("forum_comment")
-      .select(`id, content, created_at, user_id, forum_post_id`)
+    const rows = (data ?? []) as unknown as ForumPostRow[]
 
-    // Load all users referenced by posts + comments
-    const userIds = Array.from(
-      new Set([
-        ...posts.map((p) => p.user_id),
-        ...(comments?.map((c) => c.user_id) ?? []),
-      ])
-    )
+    return rows.map<ForumPost>((row) => {
+      const authorName =
+        row.profile?.name ??
+        row.profile?.email ??
+        "Unknown"
 
-    const { data: users } = await supabase
-      .from("auth.users")
-      .select("id, email")
-      .in("id", userIds)
+      const replies: ForumReply[] =
+        row.comments?.map((c: ForumCommentRow) => {
+          const commentAuthorName =
+            c.profile?.name ??
+            c.profile?.email ??
+            "Unknown"
 
-    return posts.map((p) => {
-      const postUser = users?.find((u) => u.id === p.user_id)
-      const postComments = (comments ?? []).filter(
-        (c) => c.forum_post_id === p.id
-      )
-
-      return {
-        id: p.id,
-        title: p.title ?? "",
-        message: p.content,
-        category: p.category as ForumCategory,
-        createdAt: new Date(p.created_at).toLocaleString(),
-        authorName: postUser?.email ?? "Unknown",
-        authorInitials: getInitial(postUser?.email),
-        replies: postComments.map((c) => {
-          const commentUser = users?.find((u) => u.id === c.user_id)
           return {
-            id: c.id,
+            id: String(c.id),
             message: c.content,
             createdAt: new Date(c.created_at).toLocaleString(),
-            authorName: commentUser?.email ?? "Unknown",
-            authorInitials: getInitial(commentUser?.email),
+            authorName: commentAuthorName,
+            authorInitials: getInitials(c.profile?.name ?? c.profile?.email),
           }
-        }),
+        }) ?? []
+
+      return {
+        id: String(row.id),
+        title: row.title ?? "",
+        message: row.content,
+        category: row.category as ForumCategory,
+        createdAt: new Date(row.created_at).toLocaleString(),
+        authorName,
+        authorInitials: getInitials(row.profile?.name ?? row.profile?.email),
+        replies,
       }
     })
   },
 
-  async createPost(input: { title: string; category: string; message: string }): Promise<ForumPost> {
+  async createPost(input: {
+    title: string
+    category: string
+    message: string
+  }): Promise<ForumPost> {
     const supabase = createClient()
 
-    // 1) Ensure user is logged in
     const { data: auth } = await supabase.auth.getUser()
-    if (!auth.user) throw new Error("User not authenticated")
+    if (!auth?.user) throw new Error("User not authenticated")
 
-    // 2) Get user club_id
-    const clubId = await getUserClubId(auth.user.id)
+    const profileId = auth.user.id
 
-    // 3) Insert post with club_id
+    const clubId = await getUserClubId(profileId)
+
+    const category = input.category.toLowerCase()
+
+    const nowIso = new Date().toISOString()
+
     const { data, error } = await supabase
       .from("forum_post")
       .insert({
-        user_id: auth.user.id,
+        profile_id: profileId,
         club_id: clubId,
         title: input.title,
         content: input.message,
-        category: input.category,
+        category,
+        created_at: nowIso,
       })
-      .select(`id, title, content, category, created_at, user_id`)
+      .select(
+        `
+        id,
+        title,
+        content,
+        category,
+        created_at,
+        profile:profile_id (
+          id,
+          name,
+          email
+        )
+      `
+      )
       .single()
 
     if (error) throw error
 
-    // Load user email
-    const { data: user } = await supabase
-      .from("auth.users")
-      .select("email")
-      .eq("id", auth.user.id)
-      .single()
+    const row = data as unknown as NewPostRow
+
+    const authorName =
+      row.profile?.name ??
+      row.profile?.email ??
+      "Unknown"
 
     return {
-      id: data.id,
-      title: data.title,
-      message: data.content,
-      category: data.category,
-      createdAt: new Date(data.created_at).toLocaleString(),
-      authorName: user?.email ?? "Unknown",
-      authorInitials: getInitial(user?.email),
+      id: String(row.id),
+      title: row.title,
+      message: row.content,
+      category: row.category as ForumCategory,
+      createdAt: new Date(row.created_at).toLocaleString(),
+      authorName,
+      authorInitials: getInitials(row.profile?.name ?? row.profile?.email),
       replies: [],
     }
   },
 
-  async reply(postId: string, message: string): Promise<ForumReply> {
+  async reply(postId: string | number, message: string): Promise<ForumReply> {
     const supabase = createClient()
 
     const { data: auth } = await supabase.auth.getUser()
-    if (!auth.user) throw new Error("Not authenticated")
+    if (!auth?.user) throw new Error("Not authenticated")
+
+    const profileId = auth.user.id
+    const nowIso = new Date().toISOString()
 
     const { data, error } = await supabase
       .from("forum_comment")
       .insert({
         content: message,
-        forum_post_id: postId,
-        user_id: auth.user.id,
+        forum_post_id: Number(postId),
+        profile_id: profileId,
+        created_at: nowIso,
       })
-      .select(`id, content, created_at, user_id`)
+      .select(
+        `
+        id,
+        content,
+        created_at,
+        profile:profile_id (
+          id,
+          name,
+          email
+        )
+      `
+      )
       .single()
 
     if (error) throw error
 
-    const { data: user } = await supabase
-      .from("auth.users")
-      .select("email")
-      .eq("id", auth.user.id)
-      .single()
+    const row = data as unknown as NewCommentRow
+
+    const authorName =
+      row.profile?.name ??
+      row.profile?.email ??
+      "Unknown"
 
     return {
-      id: data.id,
-      message: data.content,
-      createdAt: new Date(data.created_at).toLocaleString(),
-      authorName: user?.email ?? "Unknown",
-      authorInitials: getInitial(user?.email),
+      id: String(row.id),
+      message: row.content,
+      createdAt: new Date(row.created_at).toLocaleString(),
+      authorName,
+      authorInitials: getInitials(row.profile?.name ?? row.profile?.email),
     }
   },
 }
 
-function getInitial(email?: string | null) {
-  return email?.[0]?.toUpperCase() ?? "U"
+function getInitials(input?: string | null): string {
+  if (!input) return "U"
+
+  const trimmed = input.trim()
+  if (!trimmed) return "U"
+
+  if (trimmed.includes("@")) {
+    return trimmed[0]!.toUpperCase()
+  }
+
+  const parts = trimmed.split(/\s+/)
+  const first = parts[0]?.[0] ?? ""
+  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : ""
+  const initials = (first + last).toUpperCase()
+
+  return initials || "U"
 }
