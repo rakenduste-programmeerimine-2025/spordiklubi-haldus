@@ -1,11 +1,24 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
-export default function ClubSettings() {
+export default function ClubSettings({ clubId }: { clubId: string }) {
   const [copied, setCopied] = useState(false)
-  const textToCopy = "https://teamync.app/join/club"
+  const [token, setToken] = useState<string | null>(null)
+  const textToCopy = token
+
+  useEffect(() => {
+    async function fetchToken() {
+      const res = await fetch(`lib/api/invite/${clubId}`, { method: "GET" })
+      const data = await res.json()
+      if (data.token) setToken(data.token)
+    }
+    fetchToken()
+  }, [clubId])
 
   const handleCopy = async () => {
+    if (!textToCopy) {
+      return
+    }
     try {
       await navigator.clipboard.writeText(textToCopy)
       setCopied(true)
@@ -14,6 +27,19 @@ export default function ClubSettings() {
       console.error("Failed to copy!", err)
     }
   }
+
+  async function generateInvite() {
+    const res = await fetch(`/api/invite/${clubId}`, {
+      method: "POST",
+    })
+
+    const data = await res.json()
+
+    if (data.inviteLink) {
+      setToken(data.inviteLink)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats */}
@@ -68,13 +94,21 @@ export default function ClubSettings() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
-            <p>https://teamync.app/join/club</p>
-            <button
-              onClick={handleCopy}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-            >
-              {copied ? "Copied!" : "Copy"}
-            </button>
+            {token ? (
+              <button
+                onClick={handleCopy}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+              >
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            ) : (
+              <button
+                onClick={generateInvite}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+              >
+                Generate Invite Link
+              </button>
+            )}
           </div>
         </CardContent>
       </Card>
