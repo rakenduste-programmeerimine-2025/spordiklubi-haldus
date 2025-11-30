@@ -13,10 +13,12 @@ export function ForumReplyForm({ onSubmit, onCancel }: ForumReplyFormProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
     if (!message.trim()) return
+
     try {
       setIsSubmitting(true)
-      await onSubmit(message)
+      await onSubmit(message.trim())
       setMessage("")
     } finally {
       setIsSubmitting(false)
@@ -31,6 +33,12 @@ export function ForumReplyForm({ onSubmit, onCancel }: ForumReplyFormProps) {
         placeholder="Write a reply..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault()
+            handleSubmit(e)
+          }
+        }}
       />
 
       <div className="flex items-center gap-2">
@@ -41,6 +49,7 @@ export function ForumReplyForm({ onSubmit, onCancel }: ForumReplyFormProps) {
         >
           {isSubmitting ? "Sending..." : "Reply"}
         </button>
+
         {onCancel && (
           <button
             type="button"
