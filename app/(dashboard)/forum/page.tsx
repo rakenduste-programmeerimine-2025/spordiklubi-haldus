@@ -17,6 +17,16 @@ export default function ForumPage() {
   })
   const [loading, setLoading] = useState(false)
 
+  // Get current user ID
+  const supabase = createClient()
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null)
+    })
+  }, [])
+
   async function loadPosts() {
     setLoading(true)
     try {
@@ -31,11 +41,22 @@ export default function ForumPage() {
     loadPosts()
   }, [filters])
 
-  useEffect(() => {
-    const supabase = createClient()
+  async function handleDeletePost(postId: string) {
+    await forumApi.deletePost(postId)
+    await loadPosts()
+  }
 
-    const channel = supabase
+  async function handleDeleteReply(replyId: string) {
+    await forumApi.deleteReply(replyId)
+    await loadPosts()
+  }
+
+  useEffect(() => {
+    const sb = createClient()
+
+    const channel = sb
       .channel("forum-realtime")
+      // INSERT post
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "forum_post" },
@@ -43,6 +64,7 @@ export default function ForumPage() {
           await loadPosts()
         }
       )
+      // INSERT reply
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "forum_comment" },
@@ -50,10 +72,26 @@ export default function ForumPage() {
           await loadPosts()
         }
       )
+      // DELETE post
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "forum_post" },
+        async () => {
+          await loadPosts()
+        }
+      )
+      // DELETE reply
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "forum_comment" },
+        async () => {
+          await loadPosts()
+        }
+      )
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      sb.removeChannel(channel)
     }
   }, [])
 
@@ -87,6 +125,10 @@ export default function ForumPage() {
           <ForumPostCard
             key={post.id}
             post={post}
+            userId={userId}
+            isOwner={post.authorId === userId}
+            onDelete={() => handleDeletePost(post.id)}
+            onDeleteReply={(replyId) => handleDeleteReply(replyId)}
             onReply={async (message) => {
               await forumApi.reply(post.id, message)
             }}
