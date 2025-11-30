@@ -6,10 +6,21 @@ import { ForumReplyForm } from "./reply-form"
 
 type ForumPostCardProps = {
   post: ForumPost
+  userId: string | null
   onReply: (message: string) => Promise<void> | void
+  isOwner?: boolean
+  onDelete?: () => Promise<void> | void
+  onDeleteReply?: (replyId: string) => Promise<void> | void
 }
 
-export function ForumPostCard({ post, onReply }: ForumPostCardProps) {
+export function ForumPostCard({
+  post,
+  userId,
+  onReply,
+  isOwner,
+  onDelete,
+  onDeleteReply,
+}: ForumPostCardProps) {
   const [showReplyForm, setShowReplyForm] = useState(false)
 
   const categoryLabel =
@@ -23,7 +34,7 @@ export function ForumPostCard({ post, onReply }: ForumPostCardProps) {
           {post.authorInitials}
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 flex-1">
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-gray-900">
               {post.authorName}
@@ -36,6 +47,16 @@ export function ForumPostCard({ post, onReply }: ForumPostCardProps) {
 
           <p className="text-xs text-gray-500">{post.createdAt}</p>
         </div>
+
+        {/* DELETE POST BUTTON */}
+        {isOwner && onDelete && (
+          <button
+            onClick={onDelete}
+            className="text-xs text-red-600 hover:underline ml-2"
+          >
+            Delete
+          </button>
+        )}
       </header>
 
       {/* Title */}
@@ -62,17 +83,32 @@ export function ForumPostCard({ post, onReply }: ForumPostCardProps) {
       {post.replies.length > 0 && (
         <div className="mt-4 space-y-3 pl-12">
           {post.replies.map((reply) => (
-            <div key={reply.id} className="text-sm text-gray-800">
-              <p className="font-semibold text-gray-900">
-                {reply.authorName}{" "}
-                <span className="ml-1 text-xs text-gray-500">
-                  {reply.createdAt}
-                </span>
-              </p>
+            <div
+              key={reply.id}
+              className="text-sm text-gray-800 flex justify-between"
+            >
+              <div>
+                <p className="font-semibold text-gray-900">
+                  {reply.authorName}{" "}
+                  <span className="ml-1 text-xs text-gray-500">
+                    {reply.createdAt}
+                  </span>
+                </p>
 
-              <p className="text-sm text-gray-800 whitespace-pre-line">
-                {reply.message}
-              </p>
+                <p className="text-sm text-gray-800 whitespace-pre-line">
+                  {reply.message}
+                </p>
+              </div>
+
+              {/* DELETE REPLY BUTTON */}
+              {reply.authorId === userId && onDeleteReply && (
+                <button
+                  onClick={() => onDeleteReply(reply.id)}
+                  className="text-xs text-red-600 hover:underline ml-4"
+                >
+                  Delete
+                </button>
+              )}
             </div>
           ))}
         </div>
