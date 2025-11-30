@@ -129,6 +129,7 @@ export const forumApi = {
             createdAt: new Date(c.created_at).toLocaleString(),
             authorName: commentAuthorName,
             authorInitials: getInitials(c.profile?.name ?? c.profile?.email),
+            authorId: c.profile?.id ?? undefined,
           }
         }) ?? []
 
@@ -140,6 +141,7 @@ export const forumApi = {
         createdAt: new Date(row.created_at).toLocaleString(),
         authorName,
         authorInitials: getInitials(row.profile?.name ?? row.profile?.email),
+        authorId: row.profile?.id ?? undefined,
         replies,
       }
     })
@@ -206,6 +208,7 @@ export const forumApi = {
       createdAt: new Date(row.created_at).toLocaleString(),
       authorName,
       authorInitials: getInitials(row.profile?.name ?? row.profile?.email),
+      authorId: row.profile?.id ?? undefined,
       replies: [],
     }
   },
@@ -258,6 +261,29 @@ export const forumApi = {
       authorInitials: getInitials(row.profile?.name ?? row.profile?.email),
     }
   },
+
+  async deletePost(postId: string): Promise<void> {
+    const supabase = createClient()
+
+    const { error } = await supabase
+      .from("forum_post")
+      .delete()
+      .eq("id", postId)
+
+    if (error) throw error
+  },
+
+  async deleteReply(replyId: string): Promise<void> {
+    const supabase = createClient()
+
+    const { error } = await supabase
+      .from("forum_comment")
+      .delete()
+      .eq("id", replyId)
+
+    if (error) throw error
+  },
+
 }
 
 function getInitials(input?: string | null): string {
