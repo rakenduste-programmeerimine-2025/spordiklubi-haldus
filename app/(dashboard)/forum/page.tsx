@@ -1,11 +1,12 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { forumApi } from "@/lib/api/forumApi"
 import { CreatePostForm } from "@/components/forum/create-post-form"
 import { FilterBar } from "@/components/forum/filter-bar"
 import { ForumPostCard } from "@/components/forum/post-card"
-import { forumApi } from "@/lib/api/forumApi"
+
 import type { ForumPost, ForumFilters } from "@/types/forum"
 
 export default function ForumPage() {
@@ -14,124 +15,107 @@ export default function ForumPage() {
     category: "all",
     search: "",
   })
-  const [isLoading, setIsLoading] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  async function loadPosts(currentFilters: ForumFilters) {
-    setIsLoading(true)
-    try {
-      const data = await forumApi.getPosts(currentFilters)
-      setPosts(data)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  // Get current user ID
+  const supabase = createClient()
+  const [userId, setUserId] = useState<string | null>(null)
 
-  async function refreshPosts() {
-    setIsRefreshing(true)
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null)
+    })
+  }, [])
+
+  async function loadPosts() {
+    setLoading(true)
     try {
       const data = await forumApi.getPosts(filters)
       setPosts(data)
     } finally {
-      setIsRefreshing(false)
+      setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadPosts(filters)
+    loadPosts()
   }, [filters])
 
-  useEffect(() => {
-  const supabase = createClient()
-
-  const channel = supabase
-    .channel("forum-realtime")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "forum_post",
-      },
-      (payload) => {
-        const newPost = payload.new
-
-        setPosts((prev) => [
-          {
-            id: newPost.id,
-            title: newPost.title,
-            message: newPost.content,
-            category: newPost.category,
-            createdAt: new Date(newPost.created_at).toLocaleString(),
-            authorName: "Unknown",
-            authorInitials: "U",
-            replies: [],
-          },
-          ...prev,
-        ])
-      }
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "forum_comment",
-      },
-      (payload) => {
-        const reply = payload.new
-
-        setPosts((prev) =>
-          prev.map((post) =>
-            post.id === reply.forum_post_id
-              ? {
-                  ...post,
-                  replies: [
-                    ...post.replies,
-                    {
-                      id: reply.id,
-                      message: reply.content,
-                      createdAt: new Date(reply.created_at).toLocaleString(),
-                      authorName: "Unknown",
-                      authorInitials: "U",
-                    },
-                  ],
-                }
-              : post
-          )
-        )
-      }
-    )
-    .subscribe()
-
-  return () => {
-    supabase.removeChannel(channel)
+  async function handleDeletePost(postId: string) {
+    await forumApi.deletePost(postId)
+    await loadPosts()
   }
-}, [])
+
+  async function handleDeleteReply(replyId: string) {
+    await forumApi.deleteReply(replyId)
+    await loadPosts()
+  }
+
+  useEffect(() => {
+    const sb = createClient()
+
+    const channel = sb
+      .channel("forum-realtime")
+      // INSERT post
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "forum_post" },
+        async () => {
+          await loadPosts()
+        }
+      )
+      // INSERT reply
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "forum_comment" },
+        async () => {
+          await loadPosts()
+        }
+      )
+      // DELETE post
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "forum_post" },
+        async () => {
+          await loadPosts()
+        }
+      )
+      // DELETE reply
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "forum_comment" },
+        async () => {
+          await loadPosts()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      sb.removeChannel(channel)
+    }
+  }, [])
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-gray-900">Team forum</h1>
+      <h1 className="text-2xl font-semibold text-gray-900">Team Forum</h1>
 
-      {/* Create post card */}
+      {/* Create a post */}
       <section className="rounded-3xl bg-white px-6 py-5 shadow-sm">
         <CreatePostForm
           onSubmit={async (data) => {
-            const newPost = await forumApi.createPost(data)
-            setPosts((prev) => [newPost, ...prev])
-            refreshPosts()
+            await forumApi.createPost(data)
           }}
         />
       </section>
+
       <FilterBar filters={filters} onChange={setFilters} />
 
-      {/* Posts list */}
       <div className="space-y-3">
-        {isLoading && posts.length === 0 && (
+        {loading && posts.length === 0 && (
           <p className="text-sm text-gray-500">Loading posts…</p>
         )}
 
-        {!isLoading && posts.length === 0 && (
+        {!loading && posts.length === 0 && (
           <p className="text-sm text-gray-500">
             No posts yet. Be the first to write something!
           </p>
@@ -141,23 +125,16 @@ export default function ForumPage() {
           <ForumPostCard
             key={post.id}
             post={post}
+            userId={userId}
+            isOwner={post.authorId === userId}
+            onDelete={() => handleDeletePost(post.id)}
+            onDeleteReply={(replyId) => handleDeleteReply(replyId)}
             onReply={async (message) => {
-              const reply = await forumApi.reply(post.id, message)
-              setPosts((prev) =>
-                prev.map((p) =>
-                  p.id === post.id ? { ...p, replies: [...p.replies, reply] } : p
-                )
-              )
-              refreshPosts()
+              await forumApi.reply(post.id, message)
             }}
           />
         ))}
       </div>
-      {isRefreshing && (
-        <p className="text-xs text-gray-400 text-center">
-          Updating...
-          </p>
-      )}
     </div>
   )
 }

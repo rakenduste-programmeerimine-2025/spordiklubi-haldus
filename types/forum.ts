@@ -8,6 +8,7 @@ export type ForumReply = {
   id: string
   authorName: string
   authorInitials: string
+  authorId?:string
   createdAt: string
   message: string
 }
@@ -17,6 +18,7 @@ export type ForumPost = {
   title: string
   authorName: string
   authorInitials: string
+  authorId?: string
   createdAt: string
   category: ForumCategory
   message: string

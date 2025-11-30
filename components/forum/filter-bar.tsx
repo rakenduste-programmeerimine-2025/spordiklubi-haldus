@@ -9,10 +9,10 @@ type FilterBarProps = {
 
 const categories: (ForumCategory | "all")[] = [
   "all",
+  "general",
   "announcement",
   "training",
   "transport",
-  "general",
 ]
 
 export function FilterBar({ filters, onChange }: FilterBarProps) {
@@ -40,19 +40,6 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
           ))}
         </select>
       </div>
-
-      {/* <input
-        type="search"
-        placeholder="Search..."
-        value={filters.search}
-        onChange={(e) =>
-          onChange({
-            ...filters,
-            search: e.target.value,
-          })
-        }
-        className="w-40 rounded-full bg-[#f2f2f5] px-3 py-1 text-sm text-gray-700 outline-none"
-      /> */}
     </div>
   )
 }

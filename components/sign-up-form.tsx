@@ -79,12 +79,12 @@ export function SignUpForm({
           id: user.user?.id,
           email: user.user?.email,
           name: fullName,
-          role_id: 1,
         })
 
         if (profileError) throw profileError
       }
-      router.push("/auth/sign-up-success")
+      //sign-up-success
+      router.push("/auth/sign-up/role")
     } catch (error: unknown) {
       setError(error instanceof Error ? [error.message] : ["An error occurred"])
       console.log(error)
