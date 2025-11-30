@@ -2,6 +2,7 @@ export type ForumCategory =
   | "announcement"
   | "training"
   | "transport"
+  | "game"
   | "general"
 
 export type ForumReply = {

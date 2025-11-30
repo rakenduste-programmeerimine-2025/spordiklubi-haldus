@@ -62,7 +62,7 @@ export default function ForumPage() {
         { event: "INSERT", schema: "public", table: "forum_post" },
         async () => {
           await loadPosts()
-        }
+        },
       )
       // INSERT reply
       .on(
@@ -70,7 +70,7 @@ export default function ForumPage() {
         { event: "INSERT", schema: "public", table: "forum_comment" },
         async () => {
           await loadPosts()
-        }
+        },
       )
       // DELETE post
       .on(
@@ -78,7 +78,7 @@ export default function ForumPage() {
         { event: "DELETE", schema: "public", table: "forum_post" },
         async () => {
           await loadPosts()
-        }
+        },
       )
       // DELETE reply
       .on(
@@ -86,7 +86,7 @@ export default function ForumPage() {
         { event: "DELETE", schema: "public", table: "forum_comment" },
         async () => {
           await loadPosts()
-        }
+        },
       )
       .subscribe()
 
@@ -100,15 +100,18 @@ export default function ForumPage() {
       <h1 className="text-2xl font-semibold text-gray-900">Team Forum</h1>
 
       {/* Create a post */}
-      <section className="rounded-3xl bg-white px-6 py-5 shadow-sm">
+      <section className="rounded-[32px] bg-white px-6 py-5 shadow-sm">
         <CreatePostForm
-          onSubmit={async (data) => {
+          onSubmit={async data => {
             await forumApi.createPost(data)
           }}
         />
       </section>
 
-      <FilterBar filters={filters} onChange={setFilters} />
+      <FilterBar
+        filters={filters}
+        onChange={setFilters}
+      />
 
       <div className="space-y-3">
         {loading && posts.length === 0 && (
@@ -121,15 +124,15 @@ export default function ForumPage() {
           </p>
         )}
 
-        {posts.map((post) => (
+        {posts.map(post => (
           <ForumPostCard
             key={post.id}
             post={post}
             userId={userId}
             isOwner={post.authorId === userId}
             onDelete={() => handleDeletePost(post.id)}
-            onDeleteReply={(replyId) => handleDeleteReply(replyId)}
-            onReply={async (message) => {
+            onDeleteReply={replyId => handleDeleteReply(replyId)}
+            onReply={async message => {
               await forumApi.reply(post.id, message)
             }}
           />

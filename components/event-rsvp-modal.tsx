@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Clock, MapPin, X } from "lucide-react"
 import { format } from "date-fns"
 
@@ -46,10 +46,22 @@ export function EventRsvpModal({
   isOpen,
   onClose,
   onSave,
-  currentUserRole = "player",
+  currentUserRole = "coach", // 👈 default is coach
 }: EventRsvpModalProps) {
   const [status, setStatus] = useState<RSVPStatus | null>(null)
   const [note, setNote] = useState("")
+
+  // 🔒 Lock body scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return
+
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -72,7 +84,7 @@ export function EventRsvpModal({
             <p className="text-xs md:text-sm font-medium uppercase tracking-wide text-slate-400">
               RSVP to event
             </p>
-            <h2 className="text-lg md:text-xl font-semibold text-slate-900">
+            <h2 className="text-lg md:text-2xl font-semibold text-slate-900">
               {event.title}
             </h2>
           </div>
@@ -152,53 +164,25 @@ export function EventRsvpModal({
           )}
         </div>
 
-        {/* Attendance lists */}
-        <div className="mt-6 space-y-4">
-          {/* Going */}
-          <div>
-            <p className="text-xs md:text-sm font-medium text-slate-700">
-              Going ({going.length})
-            </p>
-            {going.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-400">
-                No players marked as going yet.
+        {/* Attendance lists – scrollable like in calendar modal */}
+        <div className="mt-6">
+          <div className="max-h-64 md:max-h-72 overflow-y-auto scrollbar-none space-y-4 pr-[14px]">
+            {/* Going */}
+            <div>
+              <p className="text-xs md:text-sm font-medium text-slate-700">
+                Going ({going.length})
               </p>
-            ) : (
-              <div className="mt-2 grid gap-2 md:grid-cols-2">
-                {going.map(person => (
-                  <div
-                    key={person.id}
-                    className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] md:text-xs font-semibold text-slate-700">
-                      {getInitials(person.name)}
-                    </div>
-                    <span className="text-xs md:text-sm text-slate-800">
-                      {person.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Not going */}
-          <div>
-            <p className="text-xs md:text-sm font-medium text-slate-700">
-              Not going ({notGoing.length})
-            </p>
-            {notGoing.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-400">
-                No players marked as not going.
-              </p>
-            ) : (
-              <div className="mt-2 grid gap-2 md:grid-cols-2">
-                {notGoing.map(person => (
-                  <div
-                    key={person.id}
-                    className="flex flex-col gap-1 rounded-2xl bg-slate-50 px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2">
+              {going.length === 0 ? (
+                <p className="mt-2 text-xs text-slate-400">
+                  No players marked as going yet.
+                </p>
+              ) : (
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  {going.map(person => (
+                    <div
+                      key={person.id}
+                      className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2"
+                    >
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] md:text-xs font-semibold text-slate-700">
                         {getInitials(person.name)}
                       </div>
@@ -206,57 +190,89 @@ export function EventRsvpModal({
                         {person.name}
                       </span>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-                    {/* Only coach sees player notes */}
-                    {currentUserRole === "coach" && person.note && (
-                      <p className="pl-10 text-[11px] md:text-xs text-slate-500">
-                        “{person.note}”
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Maybe */}
-          <div>
-            <p className="text-xs md:text-sm font-medium text-slate-700">
-              Maybe ({maybe.length})
-            </p>
-            {maybe.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-400">
-                No players marked as maybe.
+            {/* Not going */}
+            <div>
+              <p className="text-xs md:text-sm font-medium text-slate-700">
+                Not going ({notGoing.length})
               </p>
-            ) : (
-              <div className="mt-2 grid gap-2 md:grid-cols-2">
-                {maybe.map(person => (
-                  <div
-                    key={person.id}
-                    className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] md:text-xs font-semibold text-slate-700">
-                      {getInitials(person.name)}
+              {notGoing.length === 0 ? (
+                <p className="mt-2 text-xs text-slate-400">
+                  No players marked as not going.
+                </p>
+              ) : (
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  {notGoing.map(person => (
+                    <div
+                      key={person.id}
+                      className="flex flex-col gap-1 rounded-2xl bg-slate-50 px-3 py-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] md:text-xs font-semibold text-slate-700">
+                          {getInitials(person.name)}
+                        </div>
+                        <span className="text-xs md:text-sm text-slate-800">
+                          {person.name}
+                        </span>
+                      </div>
+
+                      {/* Only coach sees player notes */}
+                      {currentUserRole === "coach" && person.note && (
+                        <p className="pl-10 text-[11px] md:text-xs text-slate-500">
+                          “{person.note}”
+                        </p>
+                      )}
                     </div>
-                    <span className="text-xs md:text-sm text-slate-800">
-                      {person.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Maybe */}
+            <div>
+              <p className="text-xs md:text-sm font-medium text-slate-700">
+                Maybe ({maybe.length})
+              </p>
+              {maybe.length === 0 ? (
+                <p className="mt-2 text-xs text-slate-400">
+                  No players marked as maybe.
+                </p>
+              ) : (
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  {maybe.map(person => (
+                    <div
+                      key={person.id}
+                      className="flex flex-col gap-1 rounded-2xl bg-slate-50 px-3 py-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] md:text-xs font-semibold text-slate-700">
+                          {getInitials(person.name)}
+                        </div>
+                        <span className="text-xs md:text-sm text-slate-800">
+                          {person.name}
+                        </span>
+                      </div>
+
+                      {/* Coach sees notes */}
+                      {currentUserRole === "coach" && person.note && (
+                        <p className="pl-10 text-[11px] md:text-xs text-slate-500">
+                          “{person.note}”
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Actions */}
         <div className="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
-          >
-            Close
-          </button>
           <button
             type="button"
             onClick={handleSave}
