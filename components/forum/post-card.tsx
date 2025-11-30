@@ -3,6 +3,7 @@
 import type { ForumPost } from "@/types/forum"
 import { useState } from "react"
 import { ForumReplyForm } from "./reply-form"
+import { MessageCircle } from "lucide-react"
 
 type ForumPostCardProps = {
   post: ForumPost
@@ -60,9 +61,7 @@ export function ForumPostCard({
       </header>
 
       {/* Title */}
-      <h2 className="mt-3 text-lg font-semibold text-gray-900">
-        {post.title}
-      </h2>
+      <h2 className="mt-3 text-lg font-semibold text-gray-900">{post.title}</h2>
 
       {/* Message */}
       <p className="mt-4 text-sm text-gray-800 whitespace-pre-line">
@@ -72,17 +71,17 @@ export function ForumPostCard({
       {/* Reply button */}
       <button
         type="button"
-        onClick={() => setShowReplyForm((prev) => !prev)}
+        onClick={() => setShowReplyForm(prev => !prev)}
         className="mt-4 inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-1.5 text-xs font-medium text-gray-700"
       >
-        <span>▢</span>
+        <MessageCircle className="h-4 w-4" />
         <span>Reply</span>
       </button>
 
       {/* Replies */}
       {post.replies.length > 0 && (
         <div className="mt-4 space-y-3 pl-12">
-          {post.replies.map((reply) => (
+          {post.replies.map(reply => (
             <div
               key={reply.id}
               className="text-sm text-gray-800 flex justify-between"
@@ -117,7 +116,7 @@ export function ForumPostCard({
       {/* Reply form */}
       {showReplyForm && (
         <ForumReplyForm
-          onSubmit={async (message) => {
+          onSubmit={async message => {
             await onReply(message)
             setShowReplyForm(false)
           }}

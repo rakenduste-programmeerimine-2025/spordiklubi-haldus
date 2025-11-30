@@ -12,6 +12,7 @@ const categories: (ForumCategory | "all")[] = [
   "general",
   "announcement",
   "training",
+  "game",
   "transport",
 ]
 
@@ -23,16 +24,19 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
 
         <select
           value={filters.category}
-          onChange={(e) =>
+          onChange={e =>
             onChange({
               ...filters,
               category: e.target.value as ForumFilters["category"],
             })
           }
-          className="rounded-full bg-transparent px-3 py-1 text-sm text-gray-700"
+          className="rounded-full bg-transparent px-3 py-1 pr-1 text-sm text-gray-700"
         >
-          {categories.map((c) => (
-            <option key={c} value={c}>
+          {categories.map(c => (
+            <option
+              key={c}
+              value={c}
+            >
               {c === "all"
                 ? "All posts"
                 : c.charAt(0).toUpperCase() + c.slice(1)}
