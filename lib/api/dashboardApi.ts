@@ -59,12 +59,30 @@ export async function getDashboardStats(clubId: number) {
   .gte("date", monthStart.toISOString())
   .lte("date", monthEnd.toISOString())
 
+  // Monthly attendance - trainings
+  const { data: trainingMonthly } = await supabase.rpc(
+    "get_monthly_attendance",
+    {
+    p_club_id: clubId,
+    p_event_type: "training",
+    }
+  )
+
+  // Monthly attendance - games
+  const { data: gameMonthly } = await supabase.rpc(
+    "get_monthly_attendance",
+    {
+      p_club_id: clubId,
+      p_event_type: "match",
+    }
+  )
+
   return {
     activePlayers: activePlayers ?? 0,
     activeCoaches: activeCoaches ?? 0,
     trainingSessions: trainingSessions ?? 0,
     leagueGames: leagueGames ?? 0,
-    trainingMonthly: [],
-    gameMonthly: [],
+    trainingMonthly: trainingMonthly ?? [],
+    gameMonthly: gameMonthly ?? [],
   }
 }
