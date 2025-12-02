@@ -1,12 +1,12 @@
 
 import { createClient } from "@/lib/supabase/server"
 
-const now = new Date()
-const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-
 export async function getDashboardStats(clubId: number) {
   const supabase = await createClient()
+
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
 
   //Active players
   const { count: activePlayers } = await supabase
@@ -55,7 +55,7 @@ export async function getDashboardStats(clubId: number) {
     { count: "exact" }
   )
   .eq("club_id", clubId)
-  .eq("event_type.name", "game")
+  .eq("event_type.name", "match")
   .gte("date", monthStart.toISOString())
   .lte("date", monthEnd.toISOString())
 
