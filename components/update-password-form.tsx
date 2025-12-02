@@ -2,20 +2,14 @@
 
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { SignupButton } from "@/components/ui/signupbutton"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { PasswordInfo } from "./password-info"
+import { GlassPanel } from "@/components/ui/glasspanel"
 
 export function UpdatePasswordForm({
   className,
@@ -32,7 +26,6 @@ export function UpdatePasswordForm({
 
   const router = useRouter()
 
-  // Parooli tugevuse kontroll
   const validatePassword = (pw: string) => {
     if (pw.length < 8) return "Password must be at least 8 characters long."
     if (!/[A-Z]/.test(pw))
@@ -40,7 +33,7 @@ export function UpdatePasswordForm({
     if (!/[0-9]/.test(pw)) return "Password must contain at least one number."
     if (!/[^A-Za-z0-9]/.test(pw))
       return "Password must contain at least one special character."
-    return null // kõik OK
+    return null
   }
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -49,14 +42,12 @@ export function UpdatePasswordForm({
     setIsLoading(true)
     setError(null)
 
-    // Kontroll 1: paroolid peavad ühtima
     if (password !== confirmPassword) {
       setError("Passwords do not match.")
       setIsLoading(false)
       return
     }
 
-    // Kontroll 2: parool peab vastama nõuetele
     const passwordError = validatePassword(password)
     if (passwordError) {
       setError(passwordError)
@@ -78,81 +69,90 @@ export function UpdatePasswordForm({
 
   return (
     <div
-      className={cn("flex flex-col gap-6", className)}
+      className={cn(
+        "flex flex-col items-center justify-center w-full",
+        className,
+      )}
       {...props}
     >
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-          <CardDescription>
-            Please enter your new password below.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleForgotPassword}>
-            <div className="flex flex-col gap-6">
-              {/* New Password */}
-              <div className="grid gap-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="password">New password</Label>
-                  <PasswordInfo />
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="New password"
-                    required
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                  />
-                  
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                    onClick={() => setShowPassword(prev => !prev)}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
+      <GlassPanel heading="Reset Your Password">
+        <form onSubmit={handleForgotPassword}>
+          <div className="flex flex-col gap-6">
+            {/* New Password */}
+            <div className="grid gap-2">
+              <div className="flex items-center gap-2">
+                <Label
+                  htmlFor="password"
+                  className="text-white/90 text-base"
+                >
+                  New password
+                </Label>
+                <PasswordInfo />
               </div>
 
-              {/* Confirm Password */}
-              <div className="grid gap-2">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="New password"
+                  required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:ring-blue-400"
+                />
 
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirm ? "text" : "password"}
-                    placeholder="Repeat new password"
-                    required
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                    onClick={() => setShowConfirm(prev => !prev)}
-                  >
-                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70"
+                  onClick={() => setShowPassword(prev => !prev)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
-
-              {error && <p className="text-sm text-red-500">{error}</p>}
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? "Saving..." : "Save new password"}
-              </Button>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+
+            {/* Confirm Password */}
+            <div className="grid gap-2">
+              <Label
+                htmlFor="confirmPassword"
+                className="text-white/90 text-base"
+              >
+                Confirm password
+              </Label>
+
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirm ? "text" : "password"}
+                  placeholder="Repeat new password"
+                  required
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:ring-blue-400"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70"
+                  onClick={() => setShowConfirm(prev => !prev)}
+                >
+                  {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Error */}
+            {error && <p className="text-sm text-red-300">{error}</p>}
+
+            {/* Submit */}
+            <SignupButton
+              type="submit"
+              isLoading={isLoading}
+              label="Save password"
+              className="w-[35%] h-[45px] mx-auto py-2 text-xl"
+            />
+          </div>
+        </form>
+      </GlassPanel>
     </div>
   )
 }
