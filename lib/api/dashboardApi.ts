@@ -55,7 +55,7 @@ export async function getDashboardStats(clubId: number) {
     { count: "exact" }
   )
   .eq("club_id", clubId)
-  .eq("event_type.name", "match")
+  .eq("event_type.name", "game")
   .gte("date", monthStart.toISOString())
   .lte("date", monthEnd.toISOString())
 
@@ -73,7 +73,7 @@ export async function getDashboardStats(clubId: number) {
     "get_monthly_attendance",
     {
       p_club_id: clubId,
-      p_event_type: "match",
+      p_event_type: "game",
     }
   )
 
