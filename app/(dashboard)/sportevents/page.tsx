@@ -21,17 +21,22 @@ import {
 } from "@/components/event-rsvp-modal"
 import { EventEditModal } from "@/components/event-edit-modal"
 import { type EventType } from "@/types/events"
+import { type UserProfile, type UserRole } from "@/types/profile"
 
-// TODO: replace with real active club/team id from context/router/profile
-const CLUB_ID = 1
-
+// RSVP stored locally for now
 type MyRsvp = {
   status: RSVPStatus
   note: string
 }
 
+// for hydrating from /api/events/my-rsvps
+type MyRsvpRow = {
+  event_id: number
+  status: RSVPStatus
+  note: string | null
+}
+
 // Map between DB event_type_id and UI event.type
-// Adjust these IDs to match your `event_type` table in the DB
 const EVENT_TYPE_ID_TO_KEY: Record<number, RsvpEvent["type"]> = {
   1: "training",
   2: "game",
@@ -46,7 +51,7 @@ const EVENT_TYPE_KEY_TO_ID: Record<RsvpEvent["type"], number> = {
   other: 4,
 }
 
-// later: from logged-in user / profile
+// Build initials from full name
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -55,10 +60,6 @@ function getInitials(name: string) {
     .slice(0, 2)
     .join("")
 }
-
-const CURRENT_USER_NAME = "Sarah Johnson"
-// later: from Supabase/profile
-const CURRENT_USER_ROLE: "coach" | "player" = "coach"
 
 type EventFilter = "upcoming" | "past"
 
@@ -73,7 +74,16 @@ export default function EventsPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const currentUserInitials = getInitials(CURRENT_USER_NAME)
+  // profile state
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileError, setProfileError] = useState<string | null>(null)
+
+  const currentUserName = profile?.name ?? ""
+  const currentUserRole: UserRole = profile?.role ?? null
+  const currentUserInitials = getInitials(currentUserName)
+
+  const activeClubId = profile?.club?.id ?? null
 
   // --- Helpers to map between API events and UI events ---
 
@@ -97,6 +107,10 @@ export default function EventsPage() {
   function buildApiPayloadFromUi(ev: RsvpEvent) {
     const event_type_id = EVENT_TYPE_KEY_TO_ID[ev.type] ?? 4
 
+    if (!activeClubId) {
+      throw new Error("No active club ID available for event payload")
+    }
+
     return {
       title: ev.title,
       description: ev.description,
@@ -105,17 +119,48 @@ export default function EventsPage() {
       end_time: null, // you can extend UI later to handle end time
       location: ev.location,
       event_type_id,
-      club_id: CLUB_ID,
+      club_id: activeClubId,
     }
   }
 
-  // --- Load events from API ---
+  // --- Load profile from API (once) ---
 
   useEffect(() => {
+    const fetchProfile = async () => {
+      setProfileLoading(true)
+      setProfileError(null)
+      try {
+        const res = await fetch("/api/profile")
+
+        if (!res.ok) {
+          const text = await res.text()
+          console.error("Failed to fetch profile:", text)
+          setProfileError("Failed to load profile")
+          return
+        }
+
+        const data = (await res.json()) as UserProfile
+        setProfile(data)
+      } catch (err) {
+        console.error("Error fetching profile", err)
+        setProfileError("Error loading profile")
+      } finally {
+        setProfileLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
+
+  // --- Load events from API when we know activeClubId ---
+
+  useEffect(() => {
+    if (!activeClubId) return
+
     const fetchEvents = async () => {
       setIsLoading(true)
       try {
-        const res = await fetch(`/api/events?clubId=${CLUB_ID}`)
+        const res = await fetch(`/api/events?clubId=${activeClubId}`)
         if (!res.ok) {
           console.error("Failed to fetch events", await res.text())
           return
@@ -132,9 +177,42 @@ export default function EventsPage() {
     }
 
     fetchEvents()
-  }, [])
+  }, [activeClubId])
 
-  // --- RSVP handling (still local for now, backend already ready) ---
+  // --- Load MY RSVPs from API once profile is known ---
+
+  useEffect(() => {
+    if (!profile) return
+
+    const fetchMyRsvps = async () => {
+      try {
+        const res = await fetch("/api/events/my-rsvps")
+
+        if (!res.ok) {
+          console.error("Failed to fetch my RSVPs", await res.text())
+          return
+        }
+
+        const rows = (await res.json()) as MyRsvpRow[]
+
+        const map: Record<number, MyRsvp> = {}
+        for (const row of rows) {
+          map[row.event_id] = {
+            status: row.status,
+            note: row.note ?? "",
+          }
+        }
+
+        setMyRsvps(map)
+      } catch (err) {
+        console.error("Error fetching my RSVPs", err)
+      }
+    }
+
+    fetchMyRsvps()
+  }, [profile])
+
+  // --- RSVP handling (local state update; persistence handled in modal / rsvp route) ---
 
   const handleSaveRsvp = (
     eventId: number,
@@ -144,7 +222,8 @@ export default function EventsPage() {
       ...prev,
       [eventId]: data,
     }))
-    // TODO: we already have /api/events/:id/rsvp POST – call it from EventRsvpModal
+    // If your EventRsvpModal does NOT call POST itself,
+    // you can also call /api/events/:id/rsvp here.
   }
 
   // --- Event CRUD ---
@@ -183,11 +262,16 @@ export default function EventsPage() {
   }
 
   const handleSaveEvent = async (updated: RsvpEvent) => {
+    if (!activeClubId) {
+      console.error("Cannot save event without active club")
+      return
+    }
+
     try {
+      const payload = buildApiPayloadFromUi(updated)
+
       if (isCreating) {
         // CREATE
-        const payload = buildApiPayloadFromUi(updated)
-
         const res = await fetch("/api/events", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -205,8 +289,6 @@ export default function EventsPage() {
         setEvents(prev => [...prev, uiEvent])
       } else {
         // UPDATE
-        const payload = buildApiPayloadFromUi(updated)
-
         const res = await fetch(`/api/events/${updated.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -362,7 +444,7 @@ export default function EventsPage() {
                     {event.type}
                   </span>
 
-                  {CURRENT_USER_ROLE === "coach" && isManaging && (
+                  {currentUserRole === "coach" && isManaging && (
                     <div className="flex items-center gap-1 text-slate-600">
                       <button
                         type="button"
@@ -414,10 +496,10 @@ export default function EventsPage() {
                 {/* Left: user avatar, name */}
                 <div className="flex items-center gap-2">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-[16px] font-semibold text-slate-700">
-                    {currentUserInitials}
+                    {currentUserInitials || "?"}
                   </div>
                   <span className="text-sm text-slate-800 md:text-base">
-                    {CURRENT_USER_NAME.split(" ")[0]}
+                    {currentUserName ? currentUserName.split(" ")[0] : "You"}
                   </span>
                 </div>
 
@@ -438,6 +520,18 @@ export default function EventsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 pt-2 pb-6">
+      {/* Show profile loading / error */}
+      {profileLoading && (
+        <div className="mb-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+          Loading profile...
+        </div>
+      )}
+      {profileError && (
+        <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {profileError}
+        </div>
+      )}
+
       {/* Header row: left filter, right manage / create buttons */}
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
@@ -466,7 +560,7 @@ export default function EventsPage() {
           </p>
         </div>
 
-        {CURRENT_USER_ROLE === "coach" && (
+        {currentUserRole === "coach" && (
           <div className="mt-2 flex items-center gap-2">
             {/* Create event (only when managing) */}
             {isManaging && (
@@ -474,6 +568,7 @@ export default function EventsPage() {
                 type="button"
                 onClick={handleAddEvent}
                 className="inline-flex items-center gap-2 rounded-full bg-[#3156ff] px-4 py-2 text-sm font-medium text-white hover:bg-[#2442cc]"
+                disabled={!activeClubId}
               >
                 <Plus className="h-4 w-4" />
                 Create event
@@ -520,12 +615,14 @@ export default function EventsPage() {
           isOpen={!!activeRsvpEvent}
           onClose={() => setActiveRsvpEvent(null)}
           onSave={data => handleSaveRsvp(activeRsvpEvent.id, data)}
-          currentUserRole={CURRENT_USER_ROLE}
+          currentUserRole={currentUserRole === "coach" ? "coach" : "player"}
+          initialStatus={myRsvps[activeRsvpEvent.id]?.status}
+          initialNote={myRsvps[activeRsvpEvent.id]?.note}
         />
       )}
 
       {/* Edit / Create event modal (coach only) */}
-      {editingEvent && CURRENT_USER_ROLE === "coach" && (
+      {editingEvent && currentUserRole === "coach" && (
         <EventEditModal
           event={editingEvent}
           isOpen={!!editingEvent}
