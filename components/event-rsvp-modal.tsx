@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react"
 import { Clock, MapPin, X } from "lucide-react"
 import { format } from "date-fns"
+import { type RsvpStatus, type RsvpGrouped } from "@/types/events"
 
-export type RSVPStatus = "going" | "not_going" | "maybe"
+// Re-export so the rest of your app can still import from this file
+export type RSVPStatus = RsvpStatus
 
 export type RsvpAttendee = {
-  id: number
+  id: string
   name: string
   status: RSVPStatus
   note?: string
@@ -21,7 +23,7 @@ export type RsvpEvent = {
   location: string
   description: string
   type: "training" | "game" | "analysis" | "other"
-  attendees: RsvpAttendee[]
+  attendees: RsvpAttendee[] // kept for API, but we now fetch live RSVPs
 }
 
 type EventRsvpModalProps = {
@@ -46,12 +48,15 @@ export function EventRsvpModal({
   isOpen,
   onClose,
   onSave,
-  currentUserRole = "coach", // 👈 default is coach
+  currentUserRole = "coach",
 }: EventRsvpModalProps) {
   const [status, setStatus] = useState<RSVPStatus | null>(null)
   const [note, setNote] = useState("")
+  const [attendees, setAttendees] = useState<RsvpAttendee[]>([])
+  const [isLoadingRsvps, setIsLoadingRsvps] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
-  // 🔒 Lock body scroll while modal is open
+  //Lock body scroll while modal is open
   useEffect(() => {
     if (!isOpen) return
 
@@ -63,16 +68,92 @@ export function EventRsvpModal({
     }
   }, [isOpen])
 
+  // Load RSVPs from backend when modal opens
+  useEffect(() => {
+    if (!isOpen) return
+
+    const fetchRsvps = async () => {
+      setIsLoadingRsvps(true)
+      try {
+        const res = await fetch(`/api/events/${event.id}/rsvp`)
+        if (!res.ok) {
+          console.error("Failed to fetch RSVPs", event.id, await res.text())
+          return
+        }
+
+        const data = (await res.json()) as RsvpGrouped
+
+        const flattened: RsvpAttendee[] = [
+          ...data.going.map(r => ({
+            id: r.profile?.id ?? `unknown-going-${Math.random()}`,
+            name: r.profile?.name ?? "Unknown player",
+            status: "going" as RSVPStatus,
+            note: r.note ?? undefined,
+          })),
+          ...data.not_going.map(r => ({
+            id: r.profile?.id ?? `unknown-not-going-${Math.random()}`,
+            name: r.profile?.name ?? "Unknown player",
+            status: "not_going" as RSVPStatus,
+            note: r.note ?? undefined,
+          })),
+          ...data.maybe.map(r => ({
+            id: r.profile?.id ?? `unknown-maybe-${Math.random()}`,
+            name: r.profile?.name ?? "Unknown player",
+            status: "maybe" as RSVPStatus,
+            note: r.note ?? undefined,
+          })),
+        ]
+
+        setAttendees(flattened)
+      } catch (err) {
+        console.error("Error fetching RSVPs", err)
+      } finally {
+        setIsLoadingRsvps(false)
+      }
+    }
+
+    // reset local selection when opening
+    setStatus(null)
+    setNote("")
+    fetchRsvps()
+  }, [isOpen, event.id])
+
   if (!isOpen) return null
 
-  const going = event.attendees.filter(a => a.status === "going")
-  const notGoing = event.attendees.filter(a => a.status === "not_going")
-  const maybe = event.attendees.filter(a => a.status === "maybe")
+  const going = attendees.filter(a => a.status === "going")
+  const notGoing = attendees.filter(a => a.status === "not_going")
+  const maybe = attendees.filter(a => a.status === "maybe")
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!status) return
-    onSave?.({ status, note })
-    onClose()
+
+    try {
+      setIsSaving(true)
+
+      const res = await fetch(`/api/events/${event.id}/rsvp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, note }),
+      })
+
+      if (!res.ok) {
+        console.error("Failed to save RSVP", event.id, await res.text())
+        setIsSaving(false)
+        return
+      }
+
+      // Let parent update its own "myRsvps" state for status pill
+      onSave?.({ status, note })
+
+      // Optionally could re-fetch RSVPs here to immediately include yourself in the list
+      // but since you'll normally close the modal, it's not critical.
+
+      onClose()
+    } catch (err) {
+      console.error("Error saving RSVP", err)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -164,110 +245,114 @@ export function EventRsvpModal({
           )}
         </div>
 
-        {/* Attendance lists – scrollable like in calendar modal */}
+        {/* Attendance lists */}
         <div className="mt-6">
           <div className="max-h-64 md:max-h-72 overflow-y-auto scrollbar-none space-y-4 pr-[14px]">
-            {/* Going */}
-            <div>
-              <p className="text-xs md:text-sm font-medium text-slate-700">
-                Going ({going.length})
-              </p>
-              {going.length === 0 ? (
-                <p className="mt-2 text-xs text-slate-400">
-                  No players marked as going yet.
-                </p>
-              ) : (
-                <div className="mt-2 grid gap-2 md:grid-cols-2">
-                  {going.map(person => (
-                    <div
-                      key={person.id}
-                      className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2"
-                    >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] md:text-xs font-semibold text-slate-700">
-                        {getInitials(person.name)}
-                      </div>
-                      <span className="text-xs md:text-sm text-slate-800">
-                        {person.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Not going */}
-            <div>
-              <p className="text-xs md:text-sm font-medium text-slate-700">
-                Not going ({notGoing.length})
-              </p>
-              {notGoing.length === 0 ? (
-                <p className="mt-2 text-xs text-slate-400">
-                  No players marked as not going.
-                </p>
-              ) : (
-                <div className="mt-2 grid gap-2 md:grid-cols-2">
-                  {notGoing.map(person => (
-                    <div
-                      key={person.id}
-                      className="flex flex-col gap-1 rounded-2xl bg-slate-50 px-3 py-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] md:text-xs font-semibold text-slate-700">
-                          {getInitials(person.name)}
+            {isLoadingRsvps ? (
+              <p className="text-xs text-slate-400">Loading responses...</p>
+            ) : (
+              <>
+                {/* Going */}
+                <div>
+                  <p className="text-xs md:text-sm font-medium text-slate-700">
+                    Going ({going.length})
+                  </p>
+                  {going.length === 0 ? (
+                    <p className="mt-2 text-xs text-slate-400">
+                      No players marked as going yet.
+                    </p>
+                  ) : (
+                    <div className="mt-2 grid gap-2 md:grid-cols-2">
+                      {going.map(person => (
+                        <div
+                          key={person.id}
+                          className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2"
+                        >
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] md:text-xs font-semibold text-slate-700">
+                            {getInitials(person.name)}
+                          </div>
+                          <span className="text-xs md:text-sm text-slate-800">
+                            {person.name}
+                          </span>
                         </div>
-                        <span className="text-xs md:text-sm text-slate-800">
-                          {person.name}
-                        </span>
-                      </div>
-
-                      {/* Only coach sees player notes */}
-                      {currentUserRole === "coach" && person.note && (
-                        <p className="pl-10 text-[11px] md:text-xs text-slate-500">
-                          “{person.note}”
-                        </p>
-                      )}
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Maybe */}
-            <div>
-              <p className="text-xs md:text-sm font-medium text-slate-700">
-                Maybe ({maybe.length})
-              </p>
-              {maybe.length === 0 ? (
-                <p className="mt-2 text-xs text-slate-400">
-                  No players marked as maybe.
-                </p>
-              ) : (
-                <div className="mt-2 grid gap-2 md:grid-cols-2">
-                  {maybe.map(person => (
-                    <div
-                      key={person.id}
-                      className="flex flex-col gap-1 rounded-2xl bg-slate-50 px-3 py-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] md:text-xs font-semibold text-slate-700">
-                          {getInitials(person.name)}
+                {/* Not going */}
+                <div>
+                  <p className="text-xs md:text-sm font-medium text-slate-700">
+                    Not going ({notGoing.length})
+                  </p>
+                  {notGoing.length === 0 ? (
+                    <p className="mt-2 text-xs text-slate-400">
+                      No players marked as not going.
+                    </p>
+                  ) : (
+                    <div className="mt-2 grid gap-2 md:grid-cols-2">
+                      {notGoing.map(person => (
+                        <div
+                          key={person.id}
+                          className="flex flex-col gap-1 rounded-2xl bg-slate-50 px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] md:text-xs font-semibold text-slate-700">
+                              {getInitials(person.name)}
+                            </div>
+                            <span className="text-xs md:text-sm text-slate-800">
+                              {person.name}
+                            </span>
+                          </div>
+
+                          {currentUserRole === "coach" && person.note && (
+                            <p className="pl-10 text-[11px] md:text-xs text-slate-500">
+                              “{person.note}”
+                            </p>
+                          )}
                         </div>
-                        <span className="text-xs md:text-sm text-slate-800">
-                          {person.name}
-                        </span>
-                      </div>
-
-                      {/* Coach sees notes */}
-                      {currentUserRole === "coach" && person.note && (
-                        <p className="pl-10 text-[11px] md:text-xs text-slate-500">
-                          “{person.note}”
-                        </p>
-                      )}
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
+
+                {/* Maybe */}
+                <div>
+                  <p className="text-xs md:text-sm font-medium text-slate-700">
+                    Maybe ({maybe.length})
+                  </p>
+                  {maybe.length === 0 ? (
+                    <p className="mt-2 text-xs text-slate-400">
+                      No players marked as maybe.
+                    </p>
+                  ) : (
+                    <div className="mt-2 grid gap-2 md:grid-cols-2">
+                      {maybe.map(person => (
+                        <div
+                          key={person.id}
+                          className="flex flex-col gap-1 rounded-2xl bg-slate-50 px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[11px] md:text-xs font-semibold text-slate-700">
+                              {getInitials(person.name)}
+                            </div>
+                            <span className="text-xs md:text-sm text-slate-800">
+                              {person.name}
+                            </span>
+                          </div>
+
+                          {currentUserRole === "coach" && person.note && (
+                            <p className="pl-10 text-[11px] md:text-xs text-slate-500">
+                              “{person.note}”
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -276,10 +361,10 @@ export function EventRsvpModal({
           <button
             type="button"
             onClick={handleSave}
-            disabled={!status}
+            disabled={!status || isSaving}
             className="rounded-full bg-[#3156ff] px-5 py-2 text-sm font-semibold text-white hover:bg-[#2342d6] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save response
+            {isSaving ? "Saving..." : "Save response"}
           </button>
         </div>
       </div>
