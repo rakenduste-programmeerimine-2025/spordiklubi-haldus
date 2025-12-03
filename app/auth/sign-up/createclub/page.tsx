@@ -86,7 +86,7 @@ export default function CreateClubPage() {
 
     setTimeout(() => {
       setLoading(false)
-      router.push("/auth/sign-up-success")
+      router.push("/dashboard")
     }, 1000)
   }
 

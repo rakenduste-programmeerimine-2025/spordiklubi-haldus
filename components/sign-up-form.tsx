@@ -67,7 +67,7 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/auth/sign-up/role`,
           data: {
             full_name: fullName,
           },
@@ -79,12 +79,13 @@ export function SignUpForm({
           id: user.user?.id,
           email: user.user?.email,
           name: fullName,
+          role_id: 3,
         })
 
         if (profileError) throw profileError
       }
       //sign-up-success
-      router.push("/auth/sign-up/role")
+      router.push("/auth/sign-up-success")
     } catch (error: unknown) {
       setError(error instanceof Error ? [error.message] : ["An error occurred"])
       console.log(error)
