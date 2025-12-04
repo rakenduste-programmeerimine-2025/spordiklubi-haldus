@@ -7,15 +7,16 @@ interface Props {
 
 export default async function InvitePage({ params }: Props) {
   const supabase = await createClient()
-  const { token } = params
+  const resolvedParams = await params
+  const { token } = resolvedParams
 
-  const { data: invite, error } = await supabase
-    .from("Club_invite")
+  const { data: invite, error: inviteError } = await supabase
+    .from("club_invite")
     .select("*")
     .eq("token", token)
     .single()
 
-  if (error || !invite) {
+  if (inviteError || !invite) {
     return <p>Invalid invite</p>
   }
 
@@ -29,6 +30,16 @@ export default async function InvitePage({ params }: Props) {
 
   const userId = session.user.id
 
+  const { data: club, error: clubError } = await supabase
+    .from("club")
+    .select("id, slug")
+    .eq("club_invite_id", invite.id)
+    .single()
+
+  if (clubError || !club) {
+    return <p>Club not found for this invite</p>
+  }
+
   const { data: profile, error: profileError } = await supabase
     .from("profile")
     .select("id")
@@ -41,8 +52,8 @@ export default async function InvitePage({ params }: Props) {
 
   await supabase.from("Member").insert({
     profile_id: profile.id,
-    club_id: invite.club_id,
+    club_id: club.id,
   })
 
-  redirect(`/dashboard/club/${invite.club_id}`)
+  redirect(`/${club.slug}/dashboard`)
 }

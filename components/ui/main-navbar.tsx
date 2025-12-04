@@ -18,14 +18,7 @@ import { usePathname } from "next/navigation"
 import { LogoutButton } from "../logout-button"
 import type { UserProfile, UserRole } from "@/types/profile"
 
-const navItems = [
-  { href: "/dashboard", label: "dashboard", icon: Home },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/sportevents", label: "Events", icon: ClipboardList },
-  { href: "/forum", label: "Forum", icon: MessageCircle },
-]
-
-export function MainNavbar() {
+export function MainNavbar({ clubslug }: { clubslug: string }) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -69,6 +62,21 @@ export function MainNavbar() {
       : userRole === "player"
         ? "bg-[#16A34A]"
         : "bg-gray-300"
+
+  function getNavItems(clubslug: string) {
+    return [
+      { href: `/${clubslug}/dashboard`, label: "dashboard", icon: Home },
+      { href: `/${clubslug}/calendar`, label: "Calendar", icon: CalendarDays },
+      {
+        href: `/${clubslug}/sportevents`,
+        label: "Events",
+        icon: ClipboardList,
+      },
+      { href: `/${clubslug}/forum`, label: "Forum", icon: MessageCircle },
+    ]
+  }
+
+  const navItems = getNavItems(clubslug)
 
   return (
     <header className="w-full shadow-sm">
@@ -124,7 +132,7 @@ export function MainNavbar() {
               <ul className="py-1 text-sm">
                 <li>
                   <Link
-                    href="/settings"
+                    href={`/${clubslug}/settings`}
                     className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50"
                     onClick={() => setMenuOpen(false)}
                   >
@@ -135,7 +143,7 @@ export function MainNavbar() {
 
                 <li>
                   <Link
-                    href="/switch-team"
+                    href={`/${clubslug}/switch-team`}
                     className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50"
                     onClick={() => setMenuOpen(false)}
                   >

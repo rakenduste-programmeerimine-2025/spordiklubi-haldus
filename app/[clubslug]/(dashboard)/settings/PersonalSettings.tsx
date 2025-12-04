@@ -1,3 +1,5 @@
+"use client"
+
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 
 export default function PersonalSettings() {

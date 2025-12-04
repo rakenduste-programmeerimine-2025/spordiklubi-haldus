@@ -49,7 +49,7 @@ export default function CreateClubPage() {
       return
     }
     const supabase = await createClient()
-    const slug = clubName.trim().toLowerCase().replace(/\s+/g, "-")
+    const clubslug = clubName.trim().toLowerCase().replace(/\s+/g, "-")
 
     try {
       const { data: newClub, error } = await supabase
@@ -57,7 +57,7 @@ export default function CreateClubPage() {
         .insert({
           name: clubName,
           club_logo: file,
-          slug: slug,
+          slug: clubslug,
         })
         .select()
       if (error) throw error
@@ -86,7 +86,7 @@ export default function CreateClubPage() {
 
     setTimeout(() => {
       setLoading(false)
-      router.push("/dashboard")
+      router.push(`/auth/sign-up-sucess`)
     }, 1000)
   }
 
