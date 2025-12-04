@@ -1,80 +1,64 @@
+import { createClient } from "@/lib/supabase/client"
 
-import { createClient } from "@/lib/supabase/server"
+const ROLE_COACH_ID = 1
+const ROLE_PLAYER_ID = 2
+
+const EVENT_TRAINING = 1
+const EVENT_GAME = 2
 
 export async function getDashboardStats(clubId: number) {
-  const supabase = await createClient()
+  const supabase = createClient()
 
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
 
-  //Active players
+  const start = monthStart.toISOString().split("T")[0]
+  const end = monthEnd.toISOString().split("T")[0]
+
+  const { data: members } = await supabase
+    .from("member")
+    .select("profile_id")
+    .eq("club_id", clubId)
+
+  const ids = members?.map(m => m.profile_id) ?? []
+
   const { count: activePlayers } = await supabase
-    .from("member")
+    .from("profile")
     .select("*", { count: "exact", head: true })
-    .eq("club_id", clubId)
-  
-  //Active coaches
+    .in("id", ids)
+    .eq("role_id", ROLE_PLAYER_ID)
+
   const { count: activeCoaches } = await supabase
-    .from("member")
-    .select(
-      `
-        profile:profile_id (
-          role_id,
-          role:role_id ( name )
-        )
-      `,
-      { count: "exact" }
-    )
-    .eq("club_id", clubId)
-    .eq("profile.role.name", "coach")
+    .from("profile")
+    .select("*", { count: "exact", head: true })
+    .in("id", ids)
+    .eq("role_id", ROLE_COACH_ID)
 
-  //Training sessions this month
   const { count: trainingSessions } = await supabase
-  .from("event")
-  .select(
-    `
-      id,
-      event_type:event_type_id ( name )
-    `,
-    { count: "exact" }
-  )
-  .eq("club_id", clubId)
-  .eq("event_type.name", "training")
-  .gte("date", monthStart.toISOString())
-  .lte("date", monthEnd.toISOString())
+    .from("event")
+    .select("id", { count: "exact", head: true })
+    .eq("club_id", clubId)
+    .eq("event_type_id", EVENT_TRAINING)
+    .gte("date", start)
+    .lte("date", end)
 
-  //League games this month
   const { count: leagueGames } = await supabase
-  .from("event")
-  .select(
-    `
-      id,
-      event_type:event_type_id ( name )
-    `,
-    { count: "exact" }
-  )
-  .eq("club_id", clubId)
-  .eq("event_type.name", "game")
-  .gte("date", monthStart.toISOString())
-  .lte("date", monthEnd.toISOString())
+    .from("event")
+    .select("id", { count: "exact", head: true })
+    .eq("club_id", clubId)
+    .eq("event_type_id", EVENT_GAME)
+    .gte("date", start)
+    .lte("date", end)
 
-  // Monthly attendance - trainings
   const { data: trainingMonthly } = await supabase.rpc(
     "get_monthly_attendance",
-    {
-    p_club_id: clubId,
-    p_event_type: "training",
-    }
+    { p_club_id: clubId, p_event_type: "training" }
   )
 
-  // Monthly attendance - games
   const { data: gameMonthly } = await supabase.rpc(
     "get_monthly_attendance",
-    {
-      p_club_id: clubId,
-      p_event_type: "game",
-    }
+    { p_club_id: clubId, p_event_type: "game" }
   )
 
   return {
