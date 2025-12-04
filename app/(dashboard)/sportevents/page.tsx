@@ -520,19 +520,14 @@ export default function EventsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 pt-2 pb-6">
-      {/* Show profile loading / error */}
-      {profileLoading && (
-        <div className="mb-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-          Loading profile...
-        </div>
-      )}
+      {/* Show profile error */}
       {profileError && (
         <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {profileError}
         </div>
       )}
 
-      {/* Header row: left filter, right manage / create buttons */}
+      {/* Header row: left filter, right manage buttons */}
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <button
@@ -562,7 +557,6 @@ export default function EventsPage() {
 
         {currentUserRole === "coach" && (
           <div className="mt-2 flex items-center gap-2">
-            {/* Create event (only when managing) */}
             {isManaging && (
               <button
                 type="button"
@@ -575,15 +569,14 @@ export default function EventsPage() {
               </button>
             )}
 
-            {/* Manage Events Toggle */}
             <button
               type="button"
               onClick={() => setIsManaging(prev => !prev)}
               className={`
-        inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white
-        ${isManaging ? "bg-[#2442cc]" : "bg-[#3156ff]"}
-        hover:bg-[#2442cc]
-      `}
+                inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white
+                ${isManaging ? "bg-[#2442cc]" : "bg-[#3156ff]"}
+                hover:bg-[#2442cc]
+              `}
             >
               {isManaging ? "Done" : "Manage events"}
             </button>
@@ -593,11 +586,8 @@ export default function EventsPage() {
 
       {/* Events list */}
       <div className="space-y-4">
-        {isLoading ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-            Loading events...
-          </div>
-        ) : filteredEvents.length === 0 ? (
+        {/* Do NOT show anything until both profile + events are loaded */}
+        {profileLoading || isLoading ? null : filteredEvents.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
             {filter === "upcoming"
               ? "No upcoming events yet."
@@ -608,7 +598,7 @@ export default function EventsPage() {
         )}
       </div>
 
-      {/* RSVP modal (both coach & player) */}
+      {/* RSVP Modal */}
       {activeRsvpEvent && (
         <EventRsvpModal
           event={activeRsvpEvent}
@@ -621,7 +611,7 @@ export default function EventsPage() {
         />
       )}
 
-      {/* Edit / Create event modal (coach only) */}
+      {/* Edit/Create Modal */}
       {editingEvent && currentUserRole === "coach" && (
         <EventEditModal
           event={editingEvent}
