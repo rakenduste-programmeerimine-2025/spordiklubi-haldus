@@ -65,6 +65,8 @@ export default function CreateClubPage() {
 
       const clubId = newClub[0].id
 
+      localStorage.setItem("pendingClubId", clubId)
+
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -86,7 +88,7 @@ export default function CreateClubPage() {
 
     setTimeout(() => {
       setLoading(false)
-      router.push(`/auth/sign-up-sucess`)
+      router.push(`/auth/sign-up-success`)
     }, 1000)
   }
 

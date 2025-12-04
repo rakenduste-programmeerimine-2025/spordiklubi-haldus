@@ -24,9 +24,9 @@ export async function GET(
 
   const { data: existingToken, error } = await supabase.from("club_invite").select("token").eq("id", existingInvite_id?.club_invite_id).maybeSingle()
 
-  const inviteLink = existingToken ? `${process.env.NEXT_PUBLIC_URL}/invite/${existingToken.token}`:null
+  //const inviteLink = existingToken ? `${process.env.NEXT_PUBLIC_URL}/invite/${existingToken.token}`:null
 
-  return NextResponse.json({ inviteLink });
+  return NextResponse.json({ token: existingToken?.token });
 }
 
 // POST endpoint to generate a new invite token for a club
@@ -47,7 +47,7 @@ export async function POST(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
-    const { error: updateError } = await supabase
+  const { error: updateError } = await supabase
   .from("club")
   .update({ club_invite_id: newInvite.id })
   .eq("id", club_id);
@@ -56,6 +56,7 @@ if (updateError) {
   return NextResponse.json({ error: updateError.message }, { status: 400 })
 }
 
-  const inviteLink = `${process.env.NEXT_PUBLIC_URL}/invite/${token}`
-  return NextResponse.json({ inviteLink })
+  //const inviteLink = `${process.env.NEXT_PUBLIC_URL}/invite/${token}`
+
+  return NextResponse.json({ token: token })
 }
