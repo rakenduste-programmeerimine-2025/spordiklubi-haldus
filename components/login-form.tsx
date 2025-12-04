@@ -107,6 +107,11 @@ export function LoginForm({
         return
       }
 
+      if (membersError) throw membersError
+      if (!memberships || memberships.length === 0) {
+        throw new Error("You are not a member of any club")
+      }
+
       if (memberships.length === 1) {
         const clubId = memberships[0].club_id
         const { data: clubData, error: clubError } = await supabase
