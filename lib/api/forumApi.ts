@@ -29,42 +29,35 @@ type ForumPostRow = {
   comments?: ForumCommentRow[] | null
 }
 
-type NewPostRow = {
-  id: number
-  title: string
-  content: string
-  category: string
-  created_at: string
-  profile: ForumProfileRef
-}
+// GET CLUB ID FROM SLUG
 
-type NewCommentRow = {
-  id: number
-  content: string
-  created_at: string
-  profile: ForumProfileRef
-}
-
-async function getUserClubId(profileId: string) {
+async function getClubIdBySlug(slug: string) {
   const supabase = createClient()
 
   const { data, error } = await supabase
-    .from("member")
-    .select("club_id")
-    .eq("profile_id", profileId)
+    .from("club")
+    .select("id")
+    .eq("slug", slug)
     .single()
 
   if (error) {
-    console.error("Failed to load user club_id", error)
-    throw new Error("Could not determine user's club")
+    console.error("Failed to load club by slug:", error)
+    throw new Error("Invalid club slug")
   }
 
-  return data.club_id as number
+  return data.id as number
 }
 
+// API
+
 export const forumApi = {
-  async getPosts(filters: ForumFilters): Promise<ForumPost[]> {
+
+  // GET POSTS (slug-based)
+
+  async getPosts(filters: ForumFilters, slug: string): Promise<ForumPost[]> {
     const supabase = createClient()
+
+    const clubId = await getClubIdBySlug(slug)
 
     let query = supabase
       .from("forum_post")
@@ -92,17 +85,16 @@ export const forumApi = {
         )
       `
       )
+      .eq("club_id", clubId)
       .order("created_at", { ascending: false })
 
     if (filters.category !== "all") {
       query = query.eq("category", filters.category.toLowerCase())
     }
 
-    const search = filters.search.trim()
-    if (search !== "") {
-      query = query.or(
-        `title.ilike.%${search}%,content.ilike.%${search}%`
-      )
+    if (filters.search.trim() !== "") {
+      const s = filters.search.trim()
+      query = query.or(`title.ilike.%${s}%,content.ilike.%${s}%`)
     }
 
     const { data, error } = await query
@@ -110,28 +102,20 @@ export const forumApi = {
 
     const rows = (data ?? []) as unknown as ForumPostRow[]
 
-    return rows.map<ForumPost>((row) => {
+    return rows.map(row => {
       const authorName =
-        row.profile?.name ??
-        row.profile?.email ??
-        "Unknown"
+        row.profile?.name ?? row.profile?.email ?? "Unknown"
 
-      const replies: ForumReply[] =
-        row.comments?.map((c: ForumCommentRow) => {
-          const commentAuthorName =
-            c.profile?.name ??
-            c.profile?.email ??
-            "Unknown"
-
-          return {
-            id: String(c.id),
-            message: c.content,
-            createdAt: new Date(c.created_at).toLocaleString(),
-            authorName: commentAuthorName,
-            authorInitials: getInitials(c.profile?.name ?? c.profile?.email),
-            authorId: c.profile?.id ?? undefined,
-          }
-        }) ?? []
+      const replies =
+        row.comments?.map(c => ({
+          id: String(c.id),
+          message: c.content,
+          createdAt: new Date(c.created_at).toLocaleString(),
+          authorName:
+            c.profile?.name ?? c.profile?.email ?? "Unknown",
+          authorInitials: getInitials(c.profile?.name ?? c.profile?.email),
+          authorId: c.profile?.id,
+        })) ?? []
 
       return {
         id: String(row.id),
@@ -141,27 +125,25 @@ export const forumApi = {
         createdAt: new Date(row.created_at).toLocaleString(),
         authorName,
         authorInitials: getInitials(row.profile?.name ?? row.profile?.email),
-        authorId: row.profile?.id ?? undefined,
+        authorId: row.profile?.id,
         replies,
       }
     })
   },
 
-  async createPost(input: {
-    title: string
-    category: string
-    message: string
-  }): Promise<ForumPost> {
+  // CREATE POST (slug-based)
+
+  async createPost(
+    input: { title: string; category: string; message: string },
+    slug: string
+  ): Promise<ForumPost> {
     const supabase = createClient()
 
     const { data: auth } = await supabase.auth.getUser()
     if (!auth?.user) throw new Error("User not authenticated")
 
     const profileId = auth.user.id
-
-    const clubId = await getUserClubId(profileId)
-
-    const category = input.category.toLowerCase()
+    const clubId = await getClubIdBySlug(slug)
 
     const nowIso = new Date().toISOString()
 
@@ -172,7 +154,7 @@ export const forumApi = {
         club_id: clubId,
         title: input.title,
         content: input.message,
-        category,
+        category: input.category.toLowerCase(),
         created_at: nowIso,
       })
       .select(
@@ -182,7 +164,7 @@ export const forumApi = {
         content,
         category,
         created_at,
-        profile:profile_id (
+        profile:profile_id(
           id,
           name,
           email
@@ -193,22 +175,17 @@ export const forumApi = {
 
     if (error) throw error
 
-    const row = data as unknown as NewPostRow
-
-    const authorName =
-      row.profile?.name ??
-      row.profile?.email ??
-      "Unknown"
+    const profile = data.profile as unknown as ForumProfileRef
 
     return {
-      id: String(row.id),
-      title: row.title,
-      message: row.content,
-      category: row.category as ForumCategory,
-      createdAt: new Date(row.created_at).toLocaleString(),
-      authorName,
-      authorInitials: getInitials(row.profile?.name ?? row.profile?.email),
-      authorId: row.profile?.id ?? undefined,
+      id: String(data.id),
+      title: data.title,
+      message: data.content,
+      category: data.category,
+      createdAt: new Date(data.created_at).toLocaleString(),
+      authorName: profile?.name ?? profile?.email ?? "Unknown",
+      authorInitials: getInitials(profile?.name ?? profile?.email),
+      authorId: profile?.id,
       replies: [],
     }
   },
@@ -220,6 +197,7 @@ export const forumApi = {
     if (!auth?.user) throw new Error("Not authenticated")
 
     const profileId = auth.user.id
+
     const nowIso = new Date().toISOString()
 
     const { data, error } = await supabase
@@ -246,25 +224,19 @@ export const forumApi = {
 
     if (error) throw error
 
-    const row = data as unknown as NewCommentRow
-
-    const authorName =
-      row.profile?.name ??
-      row.profile?.email ??
-      "Unknown"
+    const profile = data.profile as unknown as ForumProfileRef
 
     return {
-      id: String(row.id),
-      message: row.content,
-      createdAt: new Date(row.created_at).toLocaleString(),
-      authorName,
-      authorInitials: getInitials(row.profile?.name ?? row.profile?.email),
+      id: String(data.id),
+      message: data.content,
+      createdAt: new Date(data.created_at).toLocaleString(),
+      authorName: profile?.name ?? profile?.email ?? "Unknown",
+      authorInitials: getInitials(profile?.name ?? profile?.email),
     }
   },
 
-  async deletePost(postId: string): Promise<void> {
+  async deletePost(postId: string) {
     const supabase = createClient()
-
     const { error } = await supabase
       .from("forum_post")
       .delete()
@@ -273,9 +245,8 @@ export const forumApi = {
     if (error) throw error
   },
 
-  async deleteReply(replyId: string): Promise<void> {
+  async deleteReply(replyId: string) {
     const supabase = createClient()
-
     const { error } = await supabase
       .from("forum_comment")
       .delete()
@@ -283,23 +254,18 @@ export const forumApi = {
 
     if (error) throw error
   },
-
 }
+
 
 function getInitials(input?: string | null): string {
   if (!input) return "U"
-
   const trimmed = input.trim()
   if (!trimmed) return "U"
 
-  if (trimmed.includes("@")) {
-    return trimmed[0]!.toUpperCase()
-  }
+  if (trimmed.includes("@")) return trimmed[0]!.toUpperCase()
 
   const parts = trimmed.split(/\s+/)
   const first = parts[0]?.[0] ?? ""
   const last = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : ""
-  const initials = (first + last).toUpperCase()
-
-  return initials || "U"
+  return (first + last).toUpperCase() || "U"
 }
