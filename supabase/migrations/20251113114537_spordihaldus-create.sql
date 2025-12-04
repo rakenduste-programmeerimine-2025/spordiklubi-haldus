@@ -145,6 +145,7 @@ ALTER TABLE event ADD CONSTRAINT event_created_by_profile
 ALTER TABLE event_rsvp ADD CONSTRAINT event_rsvp_event
     FOREIGN KEY (event_id)
     REFERENCES event (id)
+    ON DELETE CASCADE
     NOT DEFERRABLE
     INITIALLY IMMEDIATE
 ;

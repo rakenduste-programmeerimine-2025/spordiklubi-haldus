@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { format } from "date-fns"
 import {
   ChevronDown,
@@ -20,118 +20,38 @@ import {
   type RSVPStatus,
 } from "@/components/event-rsvp-modal"
 import { EventEditModal } from "@/components/event-edit-modal"
+import { type EventType } from "@/types/events"
+import { type UserProfile, type UserRole } from "@/types/profile"
 
-const mockEvents: RsvpEvent[] = [
-  {
-    id: 1,
-    title: "Team training",
-    date: "2025-11-30",
-    time: "18:00",
-    location: "Kuressaare kunstmuruväljak, talve 88a",
-    description: "Focus on defense drills and team coordination",
-    type: "training",
-    attendees: [
-      { id: 1, name: "Marko Saar", status: "going" },
-      { id: 2, name: "Anna Kask", status: "going" },
-      { id: 3, name: "Karl Parts", status: "going" },
-      { id: 4, name: "Laura Vaher", status: "going" },
-      { id: 5, name: "Marek Tamm", status: "going" },
-      { id: 6, name: "Jaanus Tamm", status: "going" },
-      { id: 7, name: "Mari-Liis Pärn", status: "going" },
-      { id: 8, name: "Rasmus Koppel", status: "going" },
-      { id: 9, name: "Reio Laas", status: "going" },
-      { id: 10, name: "Andri Kask", status: "going" },
-      { id: 11, name: "Triin Mets", status: "going" },
-      { id: 12, name: "Kertu Noor", status: "going" },
-      { id: 13, name: "Madis Õun", status: "going" },
-      { id: 14, name: "Oliver Rein", status: "going" },
-      { id: 15, name: "Grete Kask", status: "going" },
-      { id: 16, name: "Siim Laan", status: "going" },
-      { id: 17, name: "Kaisa Roos", status: "going" },
-      { id: 18, name: "Tanel Kütt", status: "going" },
-      { id: 19, name: "Liis Aru", status: "going" },
-      { id: 20, name: "Sander Tamm", status: "going" },
-
-      // 5 not going
-      {
-        id: 21,
-        name: "Martin Sepp",
-        status: "not_going",
-        note: "My ankle hurts",
-      },
-      { id: 22, name: "Kelli Piir", status: "not_going" },
-      { id: 23, name: "Helen Kuus", status: "not_going" },
-      { id: 24, name: "Taavi Rannamäe", status: "not_going" },
-      { id: 25, name: "Anet Kuut", status: "not_going" },
-
-      // 2 maybe
-      {
-        id: 26,
-        name: "Karl-Erik Tamm",
-        status: "maybe",
-        note: "My ankle hurts",
-      },
-      { id: 27, name: "Pille Saar", status: "maybe" },
-    ],
-  },
-  {
-    id: 2,
-    title: "League game vs FC Tartu",
-    date: "2025-12-03",
-    time: "19:30",
-    location: "Kuressaare staadion",
-    description: "Home game, meet at 18:30",
-    type: "game",
-    attendees: [],
-  },
-  {
-    id: 3,
-    title: "League game vs FC Tallinn",
-    date: "2025-11-24",
-    time: "19:30",
-    location: "Kuressaare staadion",
-    description: "Home game, meet at 18:30",
-    type: "game",
-    attendees: [],
-  },
-  {
-    id: 4,
-    title: "Team training",
-    date: "2025-11-28",
-    time: "18:00",
-    location: "Kuressaare kunstmuruväljak, talve 88a",
-    description: "Focus on attack drills and set pieces",
-    type: "training",
-    attendees: [],
-  },
-  {
-    id: 5,
-    title: "Team training",
-    date: "2025-12-05",
-    time: "18:00",
-    location: "Kuressaare kunstmuruväljak, talve 88a",
-    description: "Focus on attack drills and set pieces",
-    type: "training",
-    attendees: [],
-  },
-  {
-    id: 6,
-    title: "Team training",
-    date: "2025-12-06",
-    time: "18:00",
-    location: "Kuressaare kunstmuruväljak, talve 88a",
-    description: "Focus on attack drills and set pieces",
-    type: "training",
-    attendees: [],
-  },
-]
-
+// RSVP stored locally for now
 type MyRsvp = {
   status: RSVPStatus
   note: string
 }
 
-// later: from logged-in user
+// for hydrating from /api/events/my-rsvps
+type MyRsvpRow = {
+  event_id: number
+  status: RSVPStatus
+  note: string | null
+}
+
+// Map between DB event_type_id and UI event.type
+const EVENT_TYPE_ID_TO_KEY: Record<number, RsvpEvent["type"]> = {
+  1: "training",
+  2: "game",
+  3: "analysis",
+  4: "other",
+}
+
+const EVENT_TYPE_KEY_TO_ID: Record<RsvpEvent["type"], number> = {
+  training: 1,
+  game: 2,
+  analysis: 3,
+  other: 4,
+}
+
+// Build initials from full name
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -141,14 +61,10 @@ function getInitials(name: string) {
     .join("")
 }
 
-const CURRENT_USER_NAME = "Sarah Johnson"
-// later: from Supabase/profile
-const CURRENT_USER_ROLE: "coach" | "player" = "coach"
-
 type EventFilter = "upcoming" | "past"
 
 export default function EventsPage() {
-  const [events, setEvents] = useState<RsvpEvent[]>(mockEvents)
+  const [events, setEvents] = useState<RsvpEvent[]>([])
   const [myRsvps, setMyRsvps] = useState<Record<number, MyRsvp>>({})
   const [filter, setFilter] = useState<EventFilter>("upcoming")
   const [isManaging, setIsManaging] = useState(false)
@@ -156,6 +72,147 @@ export default function EventsPage() {
   const [activeRsvpEvent, setActiveRsvpEvent] = useState<RsvpEvent | null>(null)
   const [editingEvent, setEditingEvent] = useState<RsvpEvent | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  // profile state
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileError, setProfileError] = useState<string | null>(null)
+
+  const currentUserName = profile?.name ?? ""
+  const currentUserRole: UserRole = profile?.role ?? null
+  const currentUserInitials = getInitials(currentUserName)
+
+  const activeClubId = profile?.club?.id ?? null
+
+  // --- Helpers to map between API events and UI events ---
+
+  function mapApiEventToUi(event: EventType): RsvpEvent {
+    const type =
+      EVENT_TYPE_ID_TO_KEY[event.event_type_id] ??
+      ("other" as RsvpEvent["type"])
+
+    return {
+      id: event.id,
+      title: event.title,
+      date: event.date, // date column (YYYY-MM-DD)
+      time: event.start_time?.slice(0, 5) ?? "00:00",
+      location: event.location,
+      description: event.description,
+      type,
+      attendees: [], // RSVP data handled by EventRsvpModal via /rsvp endpoint
+    }
+  }
+
+  function buildApiPayloadFromUi(ev: RsvpEvent) {
+    const event_type_id = EVENT_TYPE_KEY_TO_ID[ev.type] ?? 4
+
+    if (!activeClubId) {
+      throw new Error("No active club ID available for event payload")
+    }
+
+    return {
+      title: ev.title,
+      description: ev.description,
+      date: ev.date,
+      start_time: ev.time,
+      end_time: null, // you can extend UI later to handle end time
+      location: ev.location,
+      event_type_id,
+      club_id: activeClubId,
+    }
+  }
+
+  // --- Load profile from API (once) ---
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setProfileLoading(true)
+      setProfileError(null)
+      try {
+        const res = await fetch("/api/profile")
+
+        if (!res.ok) {
+          const text = await res.text()
+          console.error("Failed to fetch profile:", text)
+          setProfileError("Failed to load profile")
+          return
+        }
+
+        const data = (await res.json()) as UserProfile
+        setProfile(data)
+      } catch (err) {
+        console.error("Error fetching profile", err)
+        setProfileError("Error loading profile")
+      } finally {
+        setProfileLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
+
+  // --- Load events from API when we know activeClubId ---
+
+  useEffect(() => {
+    if (!activeClubId) return
+
+    const fetchEvents = async () => {
+      setIsLoading(true)
+      try {
+        const res = await fetch(`/api/events?clubId=${activeClubId}`)
+        if (!res.ok) {
+          console.error("Failed to fetch events", await res.text())
+          return
+        }
+
+        const data = (await res.json()) as EventType[]
+        const uiEvents = data.map(mapApiEventToUi)
+        setEvents(uiEvents)
+      } catch (err) {
+        console.error("Error fetching events", err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchEvents()
+  }, [activeClubId])
+
+  // --- Load MY RSVPs from API once profile is known ---
+
+  useEffect(() => {
+    if (!profile) return
+
+    const fetchMyRsvps = async () => {
+      try {
+        const res = await fetch("/api/events/my-rsvps")
+
+        if (!res.ok) {
+          console.error("Failed to fetch my RSVPs", await res.text())
+          return
+        }
+
+        const rows = (await res.json()) as MyRsvpRow[]
+
+        const map: Record<number, MyRsvp> = {}
+        for (const row of rows) {
+          map[row.event_id] = {
+            status: row.status,
+            note: row.note ?? "",
+          }
+        }
+
+        setMyRsvps(map)
+      } catch (err) {
+        console.error("Error fetching my RSVPs", err)
+      }
+    }
+
+    fetchMyRsvps()
+  }, [profile])
+
+  // --- RSVP handling (local state update; persistence handled in modal / rsvp route) ---
 
   const handleSaveRsvp = (
     eventId: number,
@@ -165,21 +222,34 @@ export default function EventsPage() {
       ...prev,
       [eventId]: data,
     }))
-    // later: send to Supabase
+    // If your EventRsvpModal does NOT call POST itself,
+    // you can also call /api/events/:id/rsvp here.
   }
 
-  const handleDeleteEvent = (eventId: number) => {
-    setEvents(prev => prev.filter(e => e.id !== eventId))
-    // later: delete in Supabase
+  // --- Event CRUD ---
+
+  const handleDeleteEvent = async (eventId: number) => {
+    try {
+      const res = await fetch(`/api/events/${eventId}`, {
+        method: "DELETE",
+      })
+
+      if (!res.ok) {
+        console.error("Failed to delete event", await res.text())
+        return
+      }
+
+      setEvents(prev => prev.filter(e => e.id !== eventId))
+    } catch (err) {
+      console.error("Error deleting event", err)
+    }
   }
 
   const handleAddEvent = () => {
-    const nextId = events.length ? Math.max(...events.map(e => e.id)) + 1 : 1
-
     const blankEvent: RsvpEvent = {
-      id: nextId,
+      id: 0, // temporary; real id comes from DB on create
       title: "",
-      date: "2025-11-01",
+      date: format(new Date(), "yyyy-MM-dd"),
       time: "18:00",
       location: "",
       description: "",
@@ -191,18 +261,57 @@ export default function EventsPage() {
     setEditingEvent(blankEvent)
   }
 
-  const handleSaveEvent = (updated: RsvpEvent) => {
-    setEvents(prev => {
-      const exists = prev.some(e => e.id === updated.id)
-      if (!exists) {
-        return [...prev, updated]
-      }
-      return prev.map(e => (e.id === updated.id ? updated : e))
-    })
-    // later: upsert in Supabase
-  }
+  const handleSaveEvent = async (updated: RsvpEvent) => {
+    if (!activeClubId) {
+      console.error("Cannot save event without active club")
+      return
+    }
 
-  const currentUserInitials = getInitials(CURRENT_USER_NAME)
+    try {
+      const payload = buildApiPayloadFromUi(updated)
+
+      if (isCreating) {
+        // CREATE
+        const res = await fetch("/api/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+
+        if (!res.ok) {
+          console.error("Failed to create event", await res.text())
+          return
+        }
+
+        const created = (await res.json()) as EventType
+        const uiEvent = mapApiEventToUi(created)
+
+        setEvents(prev => [...prev, uiEvent])
+      } else {
+        // UPDATE
+        const res = await fetch(`/api/events/${updated.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+
+        if (!res.ok) {
+          console.error("Failed to update event", await res.text())
+          return
+        }
+
+        const saved = (await res.json()) as EventType
+        const uiEvent = mapApiEventToUi(saved)
+
+        setEvents(prev => prev.map(e => (e.id === uiEvent.id ? uiEvent : e)))
+      }
+    } catch (err) {
+      console.error("Error saving event", err)
+    } finally {
+      setEditingEvent(null)
+      setIsCreating(false)
+    }
+  }
 
   // Separate upcoming vs past by date
   const today = new Date()
@@ -335,7 +444,7 @@ export default function EventsPage() {
                     {event.type}
                   </span>
 
-                  {CURRENT_USER_ROLE === "coach" && isManaging && (
+                  {currentUserRole === "coach" && isManaging && (
                     <div className="flex items-center gap-1 text-slate-600">
                       <button
                         type="button"
@@ -387,10 +496,10 @@ export default function EventsPage() {
                 {/* Left: user avatar, name */}
                 <div className="flex items-center gap-2">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-[16px] font-semibold text-slate-700">
-                    {currentUserInitials}
+                    {currentUserInitials || "?"}
                   </div>
                   <span className="text-sm text-slate-800 md:text-base">
-                    {CURRENT_USER_NAME.split(" ")[0]}
+                    {currentUserName ? currentUserName.split(" ")[0] : "You"}
                   </span>
                 </div>
 
@@ -411,7 +520,14 @@ export default function EventsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 pt-2 pb-6">
-      {/* Header row: left filter, right manage / create buttons */}
+      {/* Show profile error */}
+      {profileError && (
+        <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {profileError}
+        </div>
+      )}
+
+      {/* Header row: left filter, right manage buttons */}
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <button
@@ -439,29 +555,28 @@ export default function EventsPage() {
           </p>
         </div>
 
-        {CURRENT_USER_ROLE === "coach" && (
+        {currentUserRole === "coach" && (
           <div className="mt-2 flex items-center gap-2">
-            {/* Create event (only when managing) */}
             {isManaging && (
               <button
                 type="button"
                 onClick={handleAddEvent}
                 className="inline-flex items-center gap-2 rounded-full bg-[#3156ff] px-4 py-2 text-sm font-medium text-white hover:bg-[#2442cc]"
+                disabled={!activeClubId}
               >
                 <Plus className="h-4 w-4" />
                 Create event
               </button>
             )}
 
-            {/* Manage Events Toggle */}
             <button
               type="button"
               onClick={() => setIsManaging(prev => !prev)}
               className={`
-        inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white
-        ${isManaging ? "bg-[#2442cc]" : "bg-[#3156ff]"}
-        hover:bg-[#2442cc]
-      `}
+                inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white
+                ${isManaging ? "bg-[#2442cc]" : "bg-[#3156ff]"}
+                hover:bg-[#2442cc]
+              `}
             >
               {isManaging ? "Done" : "Manage events"}
             </button>
@@ -471,7 +586,8 @@ export default function EventsPage() {
 
       {/* Events list */}
       <div className="space-y-4">
-        {filteredEvents.length === 0 ? (
+        {/* Do NOT show anything until both profile + events are loaded */}
+        {profileLoading || isLoading ? null : filteredEvents.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
             {filter === "upcoming"
               ? "No upcoming events yet."
@@ -482,19 +598,21 @@ export default function EventsPage() {
         )}
       </div>
 
-      {/* RSVP modal (both coach & player) */}
+      {/* RSVP Modal */}
       {activeRsvpEvent && (
         <EventRsvpModal
           event={activeRsvpEvent}
           isOpen={!!activeRsvpEvent}
           onClose={() => setActiveRsvpEvent(null)}
           onSave={data => handleSaveRsvp(activeRsvpEvent.id, data)}
-          currentUserRole={CURRENT_USER_ROLE}
+          currentUserRole={currentUserRole === "coach" ? "coach" : "player"}
+          initialStatus={myRsvps[activeRsvpEvent.id]?.status}
+          initialNote={myRsvps[activeRsvpEvent.id]?.note}
         />
       )}
 
-      {/* Edit / Create event modal (coach only) */}
-      {editingEvent && CURRENT_USER_ROLE === "coach" && (
+      {/* Edit/Create Modal */}
+      {editingEvent && currentUserRole === "coach" && (
         <EventEditModal
           event={editingEvent}
           isOpen={!!editingEvent}
