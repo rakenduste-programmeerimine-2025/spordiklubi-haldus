@@ -6,6 +6,7 @@ import { forumApi } from "@/lib/api/forumApi"
 import { CreatePostForm } from "@/components/forum/create-post-form"
 import { FilterBar } from "@/components/forum/filter-bar"
 import { ForumPostCard } from "@/components/forum/post-card"
+import { useParams } from "next/navigation"    // ✅ NEW
 
 import type { ForumPost, ForumFilters } from "@/types/forum"
 
@@ -17,8 +18,13 @@ export default function ForumPage() {
   })
   const [loading, setLoading] = useState(false)
 
-  // Get current user ID
   const supabase = createClient()
+
+  //NEW — read slug from URL
+  const params = useParams()
+  const clubslug = params.clubslug as string
+
+  // Get current user ID
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -30,7 +36,7 @@ export default function ForumPage() {
   async function loadPosts() {
     setLoading(true)
     try {
-      const data = await forumApi.getPosts(filters)
+      const data = await forumApi.getPosts(filters, clubslug)
       setPosts(data)
     } finally {
       setLoading(false)
@@ -39,7 +45,7 @@ export default function ForumPage() {
 
   useEffect(() => {
     loadPosts()
-  }, [filters])
+  }, [filters, clubslug])
 
   async function handleDeletePost(postId: string) {
     await forumApi.deletePost(postId)
@@ -51,49 +57,38 @@ export default function ForumPage() {
     await loadPosts()
   }
 
+  // Realtime updates
   useEffect(() => {
     const sb = createClient()
 
     const channel = sb
       .channel("forum-realtime")
-      // INSERT post
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "forum_post" },
-        async () => {
-          await loadPosts()
-        },
+        loadPosts
       )
-      // INSERT reply
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "forum_comment" },
-        async () => {
-          await loadPosts()
-        },
+        loadPosts
       )
-      // DELETE post
       .on(
         "postgres_changes",
         { event: "DELETE", schema: "public", table: "forum_post" },
-        async () => {
-          await loadPosts()
-        },
+        loadPosts
       )
-      // DELETE reply
       .on(
         "postgres_changes",
         { event: "DELETE", schema: "public", table: "forum_comment" },
-        async () => {
-          await loadPosts()
-        },
+        loadPosts
       )
       .subscribe()
 
     return () => {
       sb.removeChannel(channel)
     }
-  }, [])
+  }, [clubslug])
 
   return (
     <div className="space-y-4">
@@ -103,7 +98,7 @@ export default function ForumPage() {
       <section className="rounded-[32px] bg-white px-6 py-5 shadow-sm">
         <CreatePostForm
           onSubmit={async data => {
-            await forumApi.createPost(data)
+            await forumApi.createPost(data, clubslug)
           }}
         />
       </section>
