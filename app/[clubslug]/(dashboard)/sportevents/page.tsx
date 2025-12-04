@@ -14,6 +14,7 @@ import {
   Trash2,
   Plus,
 } from "lucide-react"
+import { useParams } from "next/navigation"
 import {
   EventRsvpModal,
   type RsvpEvent,
@@ -64,6 +65,9 @@ function getInitials(name: string) {
 type EventFilter = "upcoming" | "past"
 
 export default function EventsPage() {
+  //read slug from URL params (matches [clubslug] in folder)
+  const { clubslug } = useParams() as { clubslug?: string }
+
   const [events, setEvents] = useState<RsvpEvent[]>([])
   const [myRsvps, setMyRsvps] = useState<Record<number, MyRsvp>>({})
   const [filter, setFilter] = useState<EventFilter>("upcoming")
@@ -79,11 +83,12 @@ export default function EventsPage() {
   const [profileLoading, setProfileLoading] = useState(true)
   const [profileError, setProfileError] = useState<string | null>(null)
 
+  // active club ID comes from slug lookup, not from profile
+  const [activeClubId, setActiveClubId] = useState<number | null>(null)
+
   const currentUserName = profile?.name ?? ""
   const currentUserRole: UserRole = profile?.role ?? null
   const currentUserInitials = getInitials(currentUserName)
-
-  const activeClubId = profile?.club?.id ?? null
 
   // --- Helpers to map between API events and UI events ---
 
@@ -123,7 +128,7 @@ export default function EventsPage() {
     }
   }
 
-  // --- Load profile from API (once) ---
+  //Load profile from API (once)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -152,13 +157,54 @@ export default function EventsPage() {
     fetchProfile()
   }, [])
 
-  // --- Load events from API when we know activeClubId ---
+  //Resolve activeClubId from URL slug
 
   useEffect(() => {
-    if (!activeClubId) return
+    if (!clubslug) {
+      setActiveClubId(null)
+      setEvents([])
+      return
+    }
+
+    const fetchClubBySlug = async () => {
+      try {
+        const res = await fetch(`/api/clubs/by-slug?slug=${clubslug}`)
+        if (!res.ok) {
+          console.error("Failed to fetch club by slug", await res.text())
+          setActiveClubId(null)
+          setEvents([])
+          return
+        }
+
+        const club = (await res.json()) as {
+          id: number
+          name: string
+          slug: string
+        }
+
+        setActiveClubId(club.id)
+      } catch (err) {
+        console.error("Error fetching club by slug", err)
+        setActiveClubId(null)
+        setEvents([])
+      }
+    }
+
+    fetchClubBySlug()
+  }, [clubslug])
+
+  //Load events from API when we know activeClubId
+
+  useEffect(() => {
+    if (!activeClubId) {
+      setEvents([])
+      return
+    }
 
     const fetchEvents = async () => {
       setIsLoading(true)
+      // clear previous club events so they don't "flash" for other club
+      setEvents([])
       try {
         const res = await fetch(`/api/events?clubId=${activeClubId}`)
         if (!res.ok) {
@@ -212,7 +258,7 @@ export default function EventsPage() {
     fetchMyRsvps()
   }, [profile])
 
-  // --- RSVP handling (local state update; persistence handled in modal / rsvp route) ---
+  // RSVP handling (local state update)
 
   const handleSaveRsvp = (
     eventId: number,
@@ -222,11 +268,9 @@ export default function EventsPage() {
       ...prev,
       [eventId]: data,
     }))
-    // If your EventRsvpModal does NOT call POST itself,
-    // you can also call /api/events/:id/rsvp here.
   }
 
-  // --- Event CRUD ---
+  // Event CRUD
 
   const handleDeleteEvent = async (eventId: number) => {
     try {
