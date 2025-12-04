@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getDashboardStats } from "@/lib/api/dashboardApi"
 
@@ -25,15 +26,6 @@ import {
 
 // ----------------- Types -----------------
 type ChartSubject = "training" | "game"
-
-type DashboardClientProps = {
-  activePlayers: number
-  activeCoaches: number
-  trainingSessionsThisMonth: number
-  leagueGamesThisMonth: number
-  trainingMonthly: Array<{ label: string; activity: number }>
-  gameMonthly: Array<{ label: string; activity: number }>
-}
 
 type DashboardStats = {
   activePlayers: number
@@ -63,45 +55,36 @@ type MetricVariant =
 
 function getVariantColors(variant: MetricVariant) {
   switch (variant) {
-    case "players": {
-      // green
+    case "players":
       return {
         baseLight: "#BBF7D0",
         baseDark: "#16A34A",
         iconClass: "text-[#16A34A]",
       }
-    }
-    case "coaches": {
-      // orange
+    case "coaches":
       return {
         baseLight: "#FED7AA",
         baseDark: "#FB923C",
         iconClass: "text-[#FB923C]",
       }
-    }
-    case "trainings": {
-      // blue
+    case "trainings":
       return {
         baseLight: "#DBEAFE",
         baseDark: "#3156ff",
         iconClass: "text-[#3156ff]",
       }
-    }
-    case "leagueGames": {
-      // purple
+    case "leagueGames":
       return {
         baseLight: "#EDE9FE",
         baseDark: "#6D28D9",
         iconClass: "text-[#6D28D9]",
       }
-    }
-    default: {
+    default:
       return {
         baseLight: "#E0E7FF",
         baseDark: "#3156ff",
         iconClass: "text-[#3156ff]",
       }
-    }
   }
 }
 
@@ -124,12 +107,10 @@ function MetricPill({
 
   return (
     <div className="relative">
-      {/* dark arch */}
       <div
         className="absolute inset-0 rounded-[32px]"
         style={{ backgroundColor: baseDark }}
       />
-      {/* light pill + content */}
       <div
         className="relative ml-2 rounded-[32px] px-6 py-4 md:px-7 md:py-5 shadow-sm transition-transform hover:-translate-y-0.5 flex flex-col gap-1.5"
         style={{ backgroundColor: baseLight }}
@@ -188,23 +169,22 @@ function SegmentedControl<T extends string>({
   )
 }
 
-// ----------------- Dashboard UI component -----------------
+// ----------------- Dashboard UI -----------------
 
-function DashboardClient({
+function DashboardUI({
   activePlayers,
   activeCoaches,
-  trainingSessionsThisMonth,
-  leagueGamesThisMonth,
+  trainingSessions,
+  leagueGames,
   trainingMonthly,
   gameMonthly,
-}: DashboardClientProps) {
+}: DashboardStats) {
   const [subject, setSubject] = useState<ChartSubject>("training")
 
   const isTraining = subject === "training"
   const currentData = isTraining ? trainingMonthly : gameMonthly
 
   const chartTitle = isTraining ? "Training attendance" : "Game attendance"
-
   const chartDescription = isTraining
     ? "Total training attendance by month this year"
     : "Total game attendance by month this year"
@@ -234,9 +214,9 @@ function DashboardClient({
         />
       </div>
 
-      {/* Main layout */}
+      {/* Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-        {/* LEFT: Chart card */}
+        {/* LEFT: Chart */}
         <Card className="rounded-[32px] border-0 bg-white shadow-sm">
           <CardHeader className="pb-2 space-y-1">
             <CardTitle className="text-base md:text-lg leading-snug">
@@ -280,16 +260,8 @@ function DashboardClient({
                     x2="0"
                     y2="1"
                   >
-                    <stop
-                      offset="0%"
-                      stopColor={areaColor}
-                      stopOpacity={0.45}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor={areaColor}
-                      stopOpacity={0.05}
-                    />
+                    <stop offset="0%" stopColor={areaColor} stopOpacity={0.45} />
+                    <stop offset="100%" stopColor={areaColor} stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
 
@@ -321,7 +293,7 @@ function DashboardClient({
           </CardFooter>
         </Card>
 
-        {/* RIGHT: Metric pills */}
+        {/* RIGHT: Metrics */}
         <div className="grid gap-4 md:grid-cols-2">
           <MetricPill
             title="Active players"
@@ -339,14 +311,14 @@ function DashboardClient({
           />
           <MetricPill
             title="Training sessions"
-            value={trainingSessionsThisMonth}
+            value={trainingSessions}
             subtitle="Trainings scheduled this month"
             icon={CalendarDays}
             variant="trainings"
           />
           <MetricPill
             title="League games"
-            value={leagueGamesThisMonth}
+            value={leagueGames}
             subtitle="Games scheduled this month"
             icon={CalendarDays}
             variant="leagueGames"
@@ -357,76 +329,87 @@ function DashboardClient({
   )
 }
 
-// ----------------- Page component (client-side data loading) -----------------
+// ----------------- PAGE COMPONENT -----------------
 
 export default function DashboardPage() {
   const supabase = createClient()
+  const { clubslug } = useParams()
 
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [stats, setStats] = useState<DashboardStats | null>(null)
 
   useEffect(() => {
-    let isMounted = true
+    let mounted = true
 
     async function load() {
       try {
+        // 1) Get current user
         const {
           data: { user },
           error: userError,
         } = await supabase.auth.getUser()
 
-        if (userError) {
-          console.error("Error fetching user:", userError)
-          throw userError
-        }
-
+        if (userError) throw userError
         if (!user) {
-          if (!isMounted) return
-          setErrorMessage("You need to be signed in to view your club dashboard.")
+          setErrorMessage("You must be signed in.")
           return
         }
 
+        // 2) Find the club by slug
+        const {
+          data: club,
+          error: clubError,
+        } = await supabase
+          .from("club")
+          .select("id")
+          .eq("slug", clubslug)
+          .single()
+
+        if (clubError || !club) {
+          setErrorMessage("Club not found.")
+          return
+        }
+
+        // 3) Ensure the user is a member of this club
         const {
           data: membership,
           error: membershipError,
         } = await supabase
           .from("member")
-          .select("club_id")
+          .select("id")
           .eq("profile_id", user.id)
-          .maybeSingle()
+          .eq("club_id", club.id)
+          .single()
 
-        if (membershipError || !membership?.club_id) {
-          console.error("Membership error:", membershipError)
-          if (!isMounted) return
-          setErrorMessage("No club membership found for this account.")
+        if (membershipError || !membership) {
+          setErrorMessage("You are not a member of this club.")
           return
         }
 
-        const clubId = membership.club_id
+        // 4) Load dashboard stats for this specific club
+        const statsResult = await getDashboardStats(club.id)
 
-        const statsResult = await getDashboardStats(clubId)
-
-        if (!isMounted) return
-        setStats(statsResult)
+        if (mounted) {
+          setStats(statsResult)
+        }
       } catch (err) {
-        console.error("Error loading dashboard stats:", err)
-        if (isMounted) {
-          setErrorMessage("Something went wrong loading your dashboard.")
+        console.error(err)
+        if (mounted) {
+          setErrorMessage("Failed to load dashboard.")
         }
       } finally {
-        if (isMounted) {
+        if (mounted) {
           setLoading(false)
         }
       }
     }
 
     load()
-
     return () => {
-      isMounted = false
+      mounted = false
     }
-  }, [supabase])
+  }, [clubslug, supabase])
 
   if (loading) {
     return (
@@ -448,14 +431,5 @@ export default function DashboardPage() {
     return null
   }
 
-  return (
-    <DashboardClient
-      activePlayers={stats.activePlayers}
-      activeCoaches={stats.activeCoaches}
-      trainingSessionsThisMonth={stats.trainingSessions}
-      leagueGamesThisMonth={stats.leagueGames}
-      trainingMonthly={stats.trainingMonthly}
-      gameMonthly={stats.gameMonthly}
-    />
-  )
+  return <DashboardUI {...stats} />
 }
