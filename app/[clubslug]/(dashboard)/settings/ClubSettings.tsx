@@ -1,15 +1,45 @@
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { useEffect, useState } from "react"
+"use client"
 
-export default function ClubSettings({ clubId }: { clubId: string }) {
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { createClient } from "@/lib/supabase/client"
+import { set } from "date-fns"
+import { use, useEffect, useState } from "react"
+
+export default function ClubSettings({ clubslug }: { clubslug: string }) {
   const [copied, setCopied] = useState(false)
   const [token, setToken] = useState<string | null>(null)
+  const [clubId, setClubId] = useState<string | null>(null)
   const textToCopy = token
 
   useEffect(() => {
+    async function fetchClubId() {
+      const decodedSlug = decodeURIComponent(clubslug)
+
+      const supabase = createClient()
+
+      const { data, error } = await supabase
+        .from("club")
+        .select("id")
+        .eq("slug", decodedSlug)
+        .maybeSingle()
+
+      if (error || !data) {
+        console.error("Error fetching club id", error)
+        return
+      }
+
+      setClubId(data.id)
+    }
+
+    fetchClubId()
+  }, [clubslug])
+
+  useEffect(() => {
+    if (!clubId) return
     async function fetchToken() {
-      const res = await fetch(`lib/api/invite/${clubId}`, { method: "GET" })
+      const res = await fetch(`/api/invite/${clubId}`, { method: "GET" })
       const data = await res.json()
+      console.log(data, clubId)
       if (data.token) setToken(data.token)
     }
     fetchToken()
@@ -22,7 +52,7 @@ export default function ClubSettings({ clubId }: { clubId: string }) {
     try {
       await navigator.clipboard.writeText(textToCopy)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000) // Reset after 2 seconds
+      setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       console.error("Failed to copy!", err)
     }
@@ -37,6 +67,8 @@ export default function ClubSettings({ clubId }: { clubId: string }) {
 
     if (data.inviteLink) {
       setToken(data.inviteLink)
+    } else {
+      console.log("Failed to generate invite:", data.error)
     }
   }
 

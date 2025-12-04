@@ -1,14 +1,18 @@
 "use client"
 
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useParams, useSearchParams } from "next/navigation"
 
 export default function SettingsTabs({ isCoach }: { isCoach: boolean }) {
   const router = useRouter()
-  const params = useSearchParams()
-  const tab = params.get("tab") || "personal"
+  const params = useParams()
+  const clubslug = params?.clubslug
+  const searchParams = useSearchParams()
+  const tab = searchParams.get("tab") || "personal"
+
+  if (!clubslug) return null
 
   const changeTab = (value: string) => {
-    router.push(`/settings?tab=${value}`)
+    router.push(`/${clubslug}/settings?tab=${value}`)
   }
 
   return (

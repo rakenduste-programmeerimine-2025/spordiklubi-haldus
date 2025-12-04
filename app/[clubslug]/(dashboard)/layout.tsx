@@ -2,17 +2,21 @@ import type { ReactNode } from "react"
 import { MainNavbar } from "@/components/ui/main-navbar"
 
 // flip this to true once auth is working
-const PROTECT_DASHBOARD = false
+const PROTECT_DASHBOARD = true
 
 export default async function DashboardLayout({
   children,
+  params,
 }: {
   children: ReactNode
+  params: { clubslug: string }
 }) {
-  if (!PROTECT_DASHBOARD) {
+  if (PROTECT_DASHBOARD) {
+    const resolvedParams = await params
+    const { clubslug } = resolvedParams
     return (
       <div className="bg-[#f7f6fb] min-h-screen">
-        <MainNavbar />
+        <MainNavbar clubslug={clubslug} />
         <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
       </div>
     )
