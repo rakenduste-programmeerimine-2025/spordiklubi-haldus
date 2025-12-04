@@ -26,13 +26,38 @@ export function LoginForm({
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) throw error
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/dashboard")
+      const { data: userData, error: loginError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+      if (loginError) throw loginError
+      if (!userData.user) throw new Error("No user found")
+
+      const { data: memberships, error: membersError } = await supabase
+        .from("member")
+        .select("club_id")
+        .eq("profile_id", userData.user.id)
+
+      if (membersError) throw membersError
+      if (!memberships || memberships.length === 0) {
+        throw new Error("You are not a member of any club")
+      }
+
+      if (memberships.length === 1) {
+        const clubId = memberships[0].club_id
+        const { data: clubData, error: clubError } = await supabase
+          .from("club")
+          .select("slug")
+          .eq("id", clubId)
+          .single()
+
+        if (clubError) throw clubError
+
+        router.push(`/${clubData.slug}/dashboard`)
+      } else {
+        router.push("/clubs/select")
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {
