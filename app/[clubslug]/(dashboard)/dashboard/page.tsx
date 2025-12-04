@@ -4,8 +4,6 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getDashboardStats } from "@/lib/api/dashboardApi"
-import { DashboardClient } from "./DashboardClient"
-import { notFound } from "next/navigation"
 import { Users, CalendarDays } from "lucide-react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 
@@ -24,7 +22,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-
 
 // ----------------- Types -----------------
 type ChartSubject = "training" | "game"
@@ -262,8 +259,16 @@ function DashboardUI({
                     x2="0"
                     y2="1"
                   >
-                    <stop offset="0%" stopColor={areaColor} stopOpacity={0.45} />
-                    <stop offset="100%" stopColor={areaColor} stopOpacity={0.05} />
+                    <stop
+                      offset="0%"
+                      stopColor={areaColor}
+                      stopOpacity={0.45}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor={areaColor}
+                      stopOpacity={0.05}
+                    />
                   </linearGradient>
                 </defs>
 
@@ -332,38 +337,14 @@ function DashboardUI({
 }
 
 // ----------------- PAGE COMPONENT -----------------
-  interface Props {
-  params: { clubslug: string }
-}
 
-export default async function DashboardPage({ params }: Props) {
-
-
+export default function DashboardPage() {
   const supabase = createClient()
   const { clubslug } = useParams()
 
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [stats, setStats] = useState<DashboardStats | null>(null)
-
-    const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-    if(!user){
-      return
-    }
-
-    const { data: club, error } = await supabase
-    .from("club")
-    .select("id")
-    .eq("slug", clubslug)
-    .single()
-
-  if (error || !club) {
-    console.log("Club not found:", clubslug, error)
-    notFound()
-  }
 
   useEffect(() => {
     let mounted = true
@@ -383,10 +364,7 @@ export default async function DashboardPage({ params }: Props) {
         }
 
         // 2) Find the club by slug
-        const {
-          data: club,
-          error: clubError,
-        } = await supabase
+        const { data: club, error: clubError } = await supabase
           .from("club")
           .select("id")
           .eq("slug", clubslug)
@@ -398,10 +376,7 @@ export default async function DashboardPage({ params }: Props) {
         }
 
         // 3) Ensure the user is a member of this club
-        const {
-          data: membership,
-          error: membershipError,
-        } = await supabase
+        const { data: membership, error: membershipError } = await supabase
           .from("member")
           .select("id")
           .eq("profile_id", user.id)
@@ -445,13 +420,6 @@ export default async function DashboardPage({ params }: Props) {
     )
   }
 
-  const { data: membership, error: membershipError } = await supabase
-    .from("member")
-    .select("club_id")
-    .eq("profile_id", user.id)
-    .maybeSingle()
-
-  if (membershipError || !membership?.club_id) {
   if (errorMessage) {
     return (
       <div className="max-w-6xl mx-auto px-4 pt-4 pb-6 text-sm text-slate-600">
@@ -459,29 +427,10 @@ export default async function DashboardPage({ params }: Props) {
       </div>
     )
   }
-  if(!membership){
-    return
-  }
 
-  const clubId = membership.club_id
-
-  const stats = await getDashboardStats(clubId)
-
-  return (
-    <DashboardClient
-      activePlayers={stats.activePlayers}
-      activeCoaches={stats.activeCoaches}
-      trainingSessionsThisMonth={stats.trainingSessions}
-      leagueGamesThisMonth={stats.leagueGames}
-      trainingMonthly={stats.trainingMonthly}
-      gameMonthly={stats.gameMonthly}
-    />
-  )
-}
   if (!stats) {
     return null
   }
 
   return <DashboardUI {...stats} />
 }
-

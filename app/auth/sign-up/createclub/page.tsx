@@ -43,6 +43,12 @@ export default function CreateClubPage() {
     setFile(f)
   }
 
+  const handleSkip = () => {
+    if (confirm("Are you sure you want to continue without creating a club?")) {
+      router.push("/auth/sign-up-success")
+    }
+  }
+
   const handleContinue = async () => {
     if (!clubName.trim()) {
       setError("Please enter a club name.")
@@ -66,17 +72,6 @@ export default function CreateClubPage() {
       const clubId = newClub[0].id
 
       localStorage.setItem("pendingClubId", clubId)
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error("No logged-in user")
-
-      const { error: memberError } = await supabase.from("member").insert({
-        profile_id: user.id,
-        club_id: clubId,
-      })
-      if (memberError) throw memberError
     } catch (err) {
       console.error("Failed to create club:", err)
       setError("failed to create a club")
@@ -231,6 +226,13 @@ export default function CreateClubPage() {
               disabled={loading}
               onClick={handleContinue}
               className="mt-1"
+            />
+            <SignupButton
+              type="button"
+              label="Skip"
+              disabled={loading}
+              onClick={handleSkip}
+              className="mt-2"
             />
           </GlassPanel>
         </div>
