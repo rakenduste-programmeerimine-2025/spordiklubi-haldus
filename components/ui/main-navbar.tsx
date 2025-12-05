@@ -27,15 +27,24 @@ export function MainNavbar({ clubslug }: { clubslug: string }) {
 
   const toggleMenu = () => setMenuOpen(prev => !prev)
 
-  // Load profile from /api/profile
+  // Load profile from /api/profile, scoped to clubslug
   useEffect(() => {
     const fetchProfile = async () => {
+      setProfileLoading(true)
       try {
-        const res = await fetch("/api/profile")
+        const res = await fetch(
+          `/api/profile?clubSlug=${encodeURIComponent(clubslug)}`,
+        )
+
         if (!res.ok) {
-          console.error("Failed to fetch profile in navbar:", await res.text())
+          console.error(
+            "Failed to fetch profile in navbar:",
+            res.status,
+            await res.text(),
+          )
           return
         }
+
         const data = (await res.json()) as UserProfile
         setProfile(data)
       } catch (err) {
@@ -45,8 +54,10 @@ export function MainNavbar({ clubslug }: { clubslug: string }) {
       }
     }
 
-    fetchProfile()
-  }, [])
+    if (clubslug) {
+      fetchProfile()
+    }
+  }, [clubslug])
 
   const userRole: UserRole = profile?.role ?? null
   const clubName = profile?.club?.name ?? "Your club"

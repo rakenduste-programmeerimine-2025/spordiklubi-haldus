@@ -22,7 +22,6 @@ import {
 import { EventEditModal } from "@/components/event-edit-modal"
 import { type EventType } from "@/types/events"
 import { type UserProfile, type UserRole } from "@/types/profile"
-import { createClient } from "@/lib/supabase/client"
 import { useParams } from "next/navigation"
 
 // RSVP stored locally for now
@@ -65,7 +64,22 @@ function getInitials(name: string) {
 
 type EventFilter = "upcoming" | "past"
 
+// --- NEW: helpers for consistent sorting by date + time ---
+function getEventDateTime(ev: RsvpEvent) {
+  // ev.date is YYYY-MM-DD and ev.time is HH:mm
+  return new Date(`${ev.date}T${ev.time || "00:00"}`)
+}
+
+function sortEventsByDateTime(list: RsvpEvent[]): RsvpEvent[] {
+  return [...list].sort(
+    (a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime(),
+  )
+}
+
 export default function EventsPage() {
+  // read slug from URL params (matches [clubslug] in folder)
+  const { clubslug } = useParams() as { clubslug?: string }
+
   const [events, setEvents] = useState<RsvpEvent[]>([])
   const [myRsvps, setMyRsvps] = useState<Record<number, MyRsvp>>({})
   const [filter, setFilter] = useState<EventFilter>("upcoming")
@@ -80,16 +94,16 @@ export default function EventsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [profileLoading, setProfileLoading] = useState(true)
   const [profileError, setProfileError] = useState<string | null>(null)
-  const [club, setClub] = useState<any | null>(null)
+
+  // active club ID comes from slug lookup, not from profile
+  const [activeClubId, setActiveClubId] = useState<number | null>(null)
+
+  // error specifically for club / slug
+  const [clubError, setClubError] = useState<string | null>(null)
 
   const currentUserName = profile?.name ?? ""
   const currentUserRole: UserRole = profile?.role ?? null
   const currentUserInitials = getInitials(currentUserName)
-
-  const activeClubId = profile?.club?.id ?? null
-
-  const params = useParams()
-  const clubslug = params.clubslug
 
   // --- Helpers to map between API events and UI events ---
 
@@ -129,8 +143,7 @@ export default function EventsPage() {
     }
   }
 
-  // --- Load profile from API (once) ---
-
+  // Load profile from API (once)
   useEffect(() => {
     const fetchProfile = async () => {
       setProfileLoading(true)
@@ -158,13 +171,68 @@ export default function EventsPage() {
     fetchProfile()
   }, [])
 
-  // --- Load events from API when we know activeClubId ---
-
+  // Resolve activeClubId from URL slug
   useEffect(() => {
-    if (!activeClubId) return
+    if (!clubslug) {
+      setActiveClubId(null)
+      setEvents([])
+      setClubError("Club not found")
+      return
+    }
+
+    const fetchClubBySlug = async () => {
+      try {
+        setClubError(null)
+        const res = await fetch(
+          `/api/clubs/by-slug?slug=${encodeURIComponent(clubslug)}`,
+        )
+
+        if (res.status === 404) {
+          console.warn("Club not found for slug:", clubslug)
+          setActiveClubId(null)
+          setEvents([])
+          setClubError("Club not found")
+          return
+        }
+
+        if (!res.ok) {
+          console.error("Failed to fetch club by slug", await res.text())
+          setActiveClubId(null)
+          setEvents([])
+          setClubError("Failed to load club")
+          return
+        }
+
+        const club = (await res.json()) as {
+          id: number
+          name: string
+          slug: string
+        }
+
+        setActiveClubId(club.id)
+        setClubError(null)
+      } catch (err) {
+        console.error("Error fetching club by slug", err)
+        setActiveClubId(null)
+        setEvents([])
+        setClubError("Error loading club")
+      }
+    }
+
+    fetchClubBySlug()
+  }, [clubslug])
+
+  // Load events from API when we know activeClubId
+  useEffect(() => {
+    if (!activeClubId) {
+      setEvents([])
+      return
+    }
 
     const fetchEvents = async () => {
       setIsLoading(true)
+      // clear previous club events so they don't "flash" for other club
+      setEvents([])
       try {
         const res = await fetch(`/api/events?clubId=${activeClubId}`)
         if (!res.ok) {
@@ -174,7 +242,9 @@ export default function EventsPage() {
 
         const data = (await res.json()) as EventType[]
         const uiEvents = data.map(mapApiEventToUi)
-        setEvents(uiEvents)
+
+        // NEW: ensure events are sorted locally as well
+        setEvents(sortEventsByDateTime(uiEvents))
       } catch (err) {
         console.error("Error fetching events", err)
       } finally {
@@ -186,7 +256,6 @@ export default function EventsPage() {
   }, [activeClubId])
 
   // --- Load MY RSVPs from API once profile is known ---
-
   useEffect(() => {
     if (!profile) return
 
@@ -218,8 +287,7 @@ export default function EventsPage() {
     fetchMyRsvps()
   }, [profile])
 
-  // --- RSVP handling (local state update; persistence handled in modal / rsvp route) ---
-
+  // RSVP handling (local state update)
   const handleSaveRsvp = (
     eventId: number,
     data: { status: RSVPStatus; note: string },
@@ -228,12 +296,9 @@ export default function EventsPage() {
       ...prev,
       [eventId]: data,
     }))
-    // If your EventRsvpModal does NOT call POST itself,
-    // you can also call /api/events/:id/rsvp here.
   }
 
-  // --- Event CRUD ---
-
+  // Event CRUD
   const handleDeleteEvent = async (eventId: number) => {
     try {
       const res = await fetch(`/api/events/${eventId}`, {
@@ -292,7 +357,8 @@ export default function EventsPage() {
         const created = (await res.json()) as EventType
         const uiEvent = mapApiEventToUi(created)
 
-        setEvents(prev => [...prev, uiEvent])
+        // NEW: insert + sort so 12:00 comes before 18:00 on the same day
+        setEvents(prev => sortEventsByDateTime([...prev, uiEvent]))
       } else {
         // UPDATE
         const res = await fetch(`/api/events/${updated.id}`, {
@@ -309,7 +375,12 @@ export default function EventsPage() {
         const saved = (await res.json()) as EventType
         const uiEvent = mapApiEventToUi(saved)
 
-        setEvents(prev => prev.map(e => (e.id === uiEvent.id ? uiEvent : e)))
+        // NEW: replace + sort after edit
+        setEvents(prev =>
+          sortEventsByDateTime(
+            prev.map(e => (e.id === uiEvent.id ? uiEvent : e)),
+          ),
+        )
       }
     } catch (err) {
       console.error("Error saving event", err)
@@ -318,24 +389,6 @@ export default function EventsPage() {
       setIsCreating(false)
     }
   }
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .from("club")
-      .select("id")
-      .eq("slug", clubslug)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) {
-          setClub(null)
-        } else {
-          setClub(data)
-        }
-      })
-  }, [clubslug])
-
-  if (!club) return <p>ERROR 404</p>
 
   // Separate upcoming vs past by date
   const today = new Date()
@@ -537,6 +590,23 @@ export default function EventsPage() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  // If slug is invalid / club not found, show friendly message
+  if (clubError) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 pt-10 pb-6">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-6 text-center">
+          <h1 className="text-lg font-semibold text-red-800 mb-2">
+            {clubError}
+          </h1>
+          <p className="text-sm text-red-700">
+            The club you tried to access doesn&apos;t exist or is no longer
+            available. Please check the URL or switch to another team.
+          </p>
         </div>
       </div>
     )

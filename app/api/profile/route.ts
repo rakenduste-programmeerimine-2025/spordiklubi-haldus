@@ -27,9 +27,12 @@ type ProfileRow = {
   memberships: MemberRow[]
 }
 
-// GET /api/profile
-export async function GET() {
+// GET /api/profile or /api/profile?clubSlug=my-club
+export async function GET(req: Request) {
   const supabase = await createClient()
+
+  const { searchParams } = new URL(req.url)
+  const requestedSlug = searchParams.get("clubSlug") // optional
 
   const {
     data: { user },
@@ -72,7 +75,6 @@ export async function GET() {
     )
   }
 
-  // Strongly typed, but cast once from Supabase's generic type
   const profile = data as unknown as ProfileRow
 
   // --- normalize role (always coach|player for this app) ---
@@ -91,9 +93,10 @@ export async function GET() {
 
   const roleName: RoleName = firstRole.name
 
-  // --- normalize membership / active club (must exist for events view) ---
-  const firstMembership = profile.memberships?.[0]
-  if (!firstMembership || !firstMembership.club) {
+  // --- normalize memberships / pick active club by slug if provided ---
+  const memberships = profile.memberships ?? []
+
+  if (!memberships.length) {
     console.error(
       "[GET /api/profile] no membership/club for profile",
       profile.id,
@@ -104,11 +107,30 @@ export async function GET() {
     )
   }
 
-  const clubValue = Array.isArray(firstMembership.club)
-    ? firstMembership.club[0]
-    : firstMembership.club
+  function extractClub(m: MemberRow): ClubRow | null {
+    if (!m.club) return null
+    return Array.isArray(m.club) ? m.club[0] ?? null : m.club
+  }
 
-  if (!clubValue) {
+  let activeClub: ClubRow | null = null
+
+  // If slug is provided, try to match that club
+  if (requestedSlug) {
+    const match = memberships.find(m => {
+      const c = extractClub(m)
+      return c?.slug === requestedSlug
+    })
+    if (match) {
+      activeClub = extractClub(match)
+    }
+  }
+
+  // Fallback: first membership
+  if (!activeClub) {
+    activeClub = extractClub(memberships[0])
+  }
+
+  if (!activeClub) {
     console.error(
       "[GET /api/profile] membership club empty for profile",
       profile.id,
@@ -126,10 +148,10 @@ export async function GET() {
     email: profile.email,
     role: roleName, // always "coach" or "player"
     club: {
-      id: clubValue.id,
-      name: clubValue.name,
-      logo: clubValue.club_logo, // can be null -> use default image in UI
-      slug: clubValue.slug,
+      id: activeClub.id,
+      name: activeClub.name,
+      logo: activeClub.club_logo, // can be null -> use default image in UI
+      slug: activeClub.slug,
     },
   })
 }

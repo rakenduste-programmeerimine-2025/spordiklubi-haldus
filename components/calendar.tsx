@@ -5,7 +5,7 @@ import { format, isSameDay } from "date-fns"
 import { Clock, MapPin, X, ExternalLink } from "lucide-react"
 import { MonthCalendar } from "./monthcalendar"
 
-//Helper Functions
+// Helper Functions
 
 function getInitials(nameOrEmail: string) {
   const base = nameOrEmail || ""
@@ -36,7 +36,7 @@ function getMapsUrl(location: string) {
   )}`
 }
 
-//Types
+// Types
 
 type EventTypeKey = "training" | "game" | "analysis" | "other"
 
@@ -74,23 +74,6 @@ type CalendarEvent = {
   type: EventTypeKey
 }
 
-type RoleName = "coach" | "player"
-
-type ProfileClub = {
-  id: number
-  name: string
-  logo: string | null
-  slug: string
-}
-
-type ProfileResponse = {
-  id: string
-  name: string
-  email: string
-  role: RoleName
-  club: ProfileClub | null
-}
-
 type RsvpStatus = "going" | "not_going" | "maybe"
 
 type RsvpProfile = {
@@ -110,55 +93,21 @@ type RsvpGroups = {
   maybe: RsvpProfile[]
 }
 
-//Main Component
+// ✅ New: clubId is passed from page.tsx
+type ClubCalendarProps = {
+  clubId: number
+}
 
-export function ClubCalendar() {
-  const [profile, setProfile] = useState<ProfileResponse | null>(null)
-  const [profileLoading, setProfileLoading] = useState(true)
-  const [profileError, setProfileError] = useState<string | null>(null)
+// Main Component
 
+export function ClubCalendar({ clubId }: ClubCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [eventsLoading, setEventsLoading] = useState(false)
   const [eventsError, setEventsError] = useState<string | null>(null)
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null)
 
-  const clubId = profile?.club?.id ?? null
-
-  //Load profile
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadProfile() {
-      try {
-        setProfileLoading(true)
-        setProfileError(null)
-
-        const res = await fetch("/api/profile")
-        if (!res.ok) throw new Error(`Failed to load profile (${res.status})`)
-
-        const data = (await res.json()) as ProfileResponse
-        if (!cancelled) setProfile(data)
-      } catch (err: unknown) {
-        if (!cancelled) {
-          setProfileError(
-            err instanceof Error ? err.message : "Failed to load profile",
-          )
-        }
-      } finally {
-        if (!cancelled) setProfileLoading(false)
-      }
-    }
-
-    loadProfile()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  //Load events
-
+  // Load events for this club
   useEffect(() => {
     if (!clubId) return
 
@@ -205,17 +154,16 @@ export function ClubCalendar() {
     }
   }, [clubId])
 
-  //Events for selected date
-
+  // Events for selected date
   const eventsForSelectedDay = useMemo(
     () => events.filter(e => isSameDay(new Date(e.date), selectedDate)),
     [events, selectedDate],
   )
 
-  const isLoading = profileLoading || eventsLoading
-  const hasError = profileError || eventsError
+  const isLoading = eventsLoading
+  const hasError = !!eventsError
 
-  //UI
+  // UI
 
   return (
     <>
@@ -227,11 +175,7 @@ export function ClubCalendar() {
           </p>
         </div>
 
-        {hasError && (
-          <p className="mt-3 text-sm text-red-500">
-            {profileError ?? eventsError}
-          </p>
-        )}
+        {hasError && <p className="mt-3 text-sm text-red-500">{eventsError}</p>}
 
         {/* Card layout */}
         <div className="mt-6 flex flex-col gap-6 rounded-[32px] bg-white p-6 shadow-md md:flex-row md:h-[420px]">
@@ -369,7 +313,7 @@ export function ClubCalendar() {
   )
 }
 
-//Modal
+// Modal
 
 type EventDetailsModalProps = {
   event: CalendarEvent
