@@ -27,24 +27,7 @@ export default function RolePage() {
     }
     const roleId = roles.id
 
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
-    if (!user) {
-      console.error("No logged-in user")
-      return
-    }
-
-    const { error: updateError, data: updatedProfile } = await supabase
-      .from("profile")
-      .update({ role_id: roleId })
-      .eq("id", user.id)
-
-    if (updateError) {
-      console.error(updateError)
-      return
-    }
+    localStorage.setItem("signup_role", role)
 
     router.push(
       role === "coach" ? "/auth/sign-up/createclub" : "/auth/sign-up-success",

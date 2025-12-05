@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { SignupButton } from "@/components/ui/signupbutton"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { GlassPanel } from "@/components/ui/glasspanel"
 export function LoginForm({
   className,
@@ -19,6 +19,28 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
+  useEffect(() => {
+    const token = localStorage.getItem("inviteToken")
+    if (!token) return
+
+    const joinClub = async () => {
+      const supabase = createClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (!session?.user) return
+
+      const res = await fetch(`/api/join/${token}`, { method: "POST" })
+      const data = await res.json()
+      if (res.ok) {
+        localStorage.removeItem("inviteToken")
+        router.push(`/${data.clubSlug}/dashboard`)
+      }
+    }
+
+    joinClub()
+  }, [router])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     const supabase = createClient()
@@ -26,13 +48,84 @@ export function LoginForm({
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) throw error
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/dashboard")
+      const { data: userData, error: loginError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+      if (loginError) throw loginError
+      if (!userData.user) throw new Error("No user found")
+
+      const userId = userData.user.id
+
+      // 1️⃣ Set role if selected before email confirmation
+      const role = localStorage.getItem("signup_role")
+      if (role) {
+        const { data: roleRow } = await supabase
+          .from("role")
+          .select("id")
+          .eq("name", role)
+          .single()
+        if (roleRow) {
+          await supabase
+            .from("profile")
+            .update({ role_id: roleRow.id })
+            .eq("id", userId)
+        }
+        localStorage.removeItem("signup_role")
+      }
+
+      // 2️⃣ Add pending club if exists
+      const pendingClubId = localStorage.getItem("pendingClubId")
+      if (pendingClubId) {
+        await supabase
+          .from("member")
+          .upsert({ profile_id: userId, club_id: pendingClubId })
+        localStorage.removeItem("pendingClubId")
+      }
+
+      const token = localStorage.getItem("inviteToken")
+      if (token) {
+        const res = await fetch(`/api/join/${token}`, { method: "POST" })
+        const data = await res.json()
+        if (res.ok) {
+          localStorage.removeItem("inviteToken")
+          router.push(`/${data.clubSlug}/dashboard`)
+          return
+        }
+      }
+
+      const { data: memberships, error: membersError } = await supabase
+        .from("member")
+        .select("club_id")
+        .eq("profile_id", userId)
+
+      if (membersError) throw membersError
+
+      if (!memberships || memberships.length === 0) {
+        router.push("/auth/join-club")
+        return
+      }
+
+      if (membersError) throw membersError
+      if (!memberships || memberships.length === 0) {
+        throw new Error("You are not a member of any club")
+      }
+
+      if (memberships.length === 1) {
+        const clubId = memberships[0].club_id
+        const { data: clubData, error: clubError } = await supabase
+          .from("club")
+          .select("slug")
+          .eq("id", clubId)
+          .single()
+
+        if (clubError) throw clubError
+
+        router.push(`/${clubData.slug}/dashboard`)
+      } else {
+        router.push("/clubs/select")
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {
