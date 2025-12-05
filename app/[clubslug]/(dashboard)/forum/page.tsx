@@ -6,7 +6,7 @@ import { forumApi } from "@/lib/api/forumApi"
 import { CreatePostForm } from "@/components/forum/create-post-form"
 import { FilterBar } from "@/components/forum/filter-bar"
 import { ForumPostCard } from "@/components/forum/post-card"
-import { useParams } from "next/navigation"    // ✅ NEW
+import { useParams } from "next/navigation"
 
 import type { ForumPost, ForumFilters } from "@/types/forum"
 
@@ -18,22 +18,48 @@ export default function ForumPage() {
   })
   const [loading, setLoading] = useState(false)
 
-  const supabase = createClient()
+  const [clubError, setClubError] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
-  //NEW — read slug from URL
+  const supabase = createClient()
   const params = useParams()
   const clubslug = params.clubslug as string
 
-  // Get current user ID
-  const [userId, setUserId] = useState<string | null>(null)
+  // 1) Slug validation
+  useEffect(() => {
+    async function validateSlug() {
+      const sb = createClient()
 
+      const { data, error } = await sb
+        .from("club")
+        .select("id")
+        .eq("slug", clubslug)
+        .maybeSingle()
+
+      if (error) {
+        console.error("[ForumPage] error checking slug:", error)
+      }
+
+      if (!data) {
+        setClubError("Club not found")
+      } else {
+        setClubError(null)
+      }
+    }
+
+    validateSlug()
+  }, [clubslug])
+
+  // 2) Load authenticated user
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id ?? null)
     })
   }, [])
 
+  // 3) Load posts
   async function loadPosts() {
+    if (clubError) return
     setLoading(true)
     try {
       const data = await forumApi.getPosts(filters, clubslug)
@@ -44,9 +70,10 @@ export default function ForumPage() {
   }
 
   useEffect(() => {
-    loadPosts()
-  }, [filters, clubslug])
+    if (!clubError) loadPosts()
+  }, [filters, clubslug, clubError])
 
+  // 4) Post + reply delete handlers
   async function handleDeletePost(postId: string) {
     await forumApi.deletePost(postId)
     await loadPosts()
@@ -57,8 +84,9 @@ export default function ForumPage() {
     await loadPosts()
   }
 
-  // Realtime updates
+  // 5) Realtime subscriptions
   useEffect(() => {
+    if (clubError) return
     const sb = createClient()
 
     const channel = sb
@@ -88,8 +116,26 @@ export default function ForumPage() {
     return () => {
       sb.removeChannel(channel)
     }
-  }, [clubslug])
+  }, [clubslug, clubError])
 
+  // 6) INVALID SLUG ERROR UI
+  if (clubError) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 pt-10 pb-6">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-6 text-center">
+          <h1 className="mb-2 text-lg font-semibold text-red-800">
+            Club not found
+          </h1>
+          <p className="text-sm text-red-700">
+            The club you tried to access doesn&apos;t exist or is no longer
+            available. Please check the URL or switch to another team.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // 7) MAIN FORUM UI
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold text-gray-900">Team Forum</h1>
@@ -103,10 +149,7 @@ export default function ForumPage() {
         />
       </section>
 
-      <FilterBar
-        filters={filters}
-        onChange={setFilters}
-      />
+      <FilterBar filters={filters} onChange={setFilters} />
 
       <div className="space-y-3">
         {loading && posts.length === 0 && (
