@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getDashboardStats } from "@/lib/api/dashboardApi"
-
 import { Users, CalendarDays } from "lucide-react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
 
@@ -260,8 +259,16 @@ function DashboardUI({
                     x2="0"
                     y2="1"
                   >
-                    <stop offset="0%" stopColor={areaColor} stopOpacity={0.45} />
-                    <stop offset="100%" stopColor={areaColor} stopOpacity={0.05} />
+                    <stop
+                      offset="0%"
+                      stopColor={areaColor}
+                      stopOpacity={0.45}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor={areaColor}
+                      stopOpacity={0.05}
+                    />
                   </linearGradient>
                 </defs>
 
@@ -357,10 +364,7 @@ export default function DashboardPage() {
         }
 
         // 2) Find the club by slug
-        const {
-          data: club,
-          error: clubError,
-        } = await supabase
+        const { data: club, error: clubError } = await supabase
           .from("club")
           .select("id")
           .eq("slug", clubslug)
@@ -372,10 +376,7 @@ export default function DashboardPage() {
         }
 
         // 3) Ensure the user is a member of this club
-        const {
-          data: membership,
-          error: membershipError,
-        } = await supabase
+        const { data: membership, error: membershipError } = await supabase
           .from("member")
           .select("id")
           .eq("profile_id", user.id)

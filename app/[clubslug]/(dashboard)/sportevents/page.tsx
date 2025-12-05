@@ -22,6 +22,8 @@ import {
 import { EventEditModal } from "@/components/event-edit-modal"
 import { type EventType } from "@/types/events"
 import { type UserProfile, type UserRole } from "@/types/profile"
+import { createClient } from "@/lib/supabase/client"
+import { useParams } from "next/navigation"
 
 // RSVP stored locally for now
 type MyRsvp = {
@@ -78,12 +80,16 @@ export default function EventsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [profileLoading, setProfileLoading] = useState(true)
   const [profileError, setProfileError] = useState<string | null>(null)
+  const [club, setClub] = useState<any | null>(null)
 
   const currentUserName = profile?.name ?? ""
   const currentUserRole: UserRole = profile?.role ?? null
   const currentUserInitials = getInitials(currentUserName)
 
   const activeClubId = profile?.club?.id ?? null
+
+  const params = useParams()
+  const clubslug = params.clubslug
 
   // --- Helpers to map between API events and UI events ---
 
@@ -312,6 +318,24 @@ export default function EventsPage() {
       setIsCreating(false)
     }
   }
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from("club")
+      .select("id")
+      .eq("slug", clubslug)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) {
+          setClub(null)
+        } else {
+          setClub(data)
+        }
+      })
+  }, [clubslug])
+
+  if (!club) return <p>ERROR 404</p>
 
   // Separate upcoming vs past by date
   const today = new Date()

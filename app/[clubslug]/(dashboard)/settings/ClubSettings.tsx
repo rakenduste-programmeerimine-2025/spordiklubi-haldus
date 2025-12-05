@@ -64,12 +64,6 @@ export default function ClubSettings({ clubslug }: { clubslug: string }) {
     })
 
     const data = await res.json()
-
-    if (data.inviteLink) {
-      setToken(data.inviteLink)
-    } else {
-      console.log("Failed to generate invite:", data.error)
-    }
   }
 
   return (
@@ -125,13 +119,14 @@ export default function ClubSettings({ clubslug }: { clubslug: string }) {
           <h2 className="text-xl font-semibold mb-4">Invite Team Members</h2>
         </CardHeader>
         <CardContent>
+          <div>{token}</div>
           <div className="flex gap-2">
             {token ? (
               <button
                 onClick={handleCopy}
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
               >
-                {copied ? "Copied!" : "Copy"}
+                {copied ? "Copied!" : "copy"}
               </button>
             ) : (
               <button
