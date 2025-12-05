@@ -65,7 +65,7 @@ function getInitials(name: string) {
 type EventFilter = "upcoming" | "past"
 
 export default function EventsPage() {
-  //read slug from URL params (matches [clubslug] in folder)
+  // read slug from URL params (matches [clubslug] in folder)
   const { clubslug } = useParams() as { clubslug?: string }
 
   const [events, setEvents] = useState<RsvpEvent[]>([])
@@ -85,6 +85,9 @@ export default function EventsPage() {
 
   // active club ID comes from slug lookup, not from profile
   const [activeClubId, setActiveClubId] = useState<number | null>(null)
+
+  // error specifically for club / slug
+  const [clubError, setClubError] = useState<string | null>(null)
 
   const currentUserName = profile?.name ?? ""
   const currentUserRole: UserRole = profile?.role ?? null
@@ -128,8 +131,7 @@ export default function EventsPage() {
     }
   }
 
-  //Load profile from API (once)
-
+  // Load profile from API (once)
   useEffect(() => {
     const fetchProfile = async () => {
       setProfileLoading(true)
@@ -157,22 +159,35 @@ export default function EventsPage() {
     fetchProfile()
   }, [])
 
-  //Resolve activeClubId from URL slug
-
+  // Resolve activeClubId from URL slug
   useEffect(() => {
     if (!clubslug) {
       setActiveClubId(null)
       setEvents([])
+      setClubError("Club not found")
       return
     }
 
     const fetchClubBySlug = async () => {
       try {
-        const res = await fetch(`/api/clubs/by-slug?slug=${clubslug}`)
+        setClubError(null)
+        const res = await fetch(
+          `/api/clubs/by-slug?slug=${encodeURIComponent(clubslug)}`,
+        )
+
+        if (res.status === 404) {
+          console.warn("Club not found for slug:", clubslug)
+          setActiveClubId(null)
+          setEvents([])
+          setClubError("Club not found")
+          return
+        }
+
         if (!res.ok) {
           console.error("Failed to fetch club by slug", await res.text())
           setActiveClubId(null)
           setEvents([])
+          setClubError("Failed to load club")
           return
         }
 
@@ -183,18 +198,19 @@ export default function EventsPage() {
         }
 
         setActiveClubId(club.id)
+        setClubError(null)
       } catch (err) {
         console.error("Error fetching club by slug", err)
         setActiveClubId(null)
         setEvents([])
+        setClubError("Error loading club")
       }
     }
 
     fetchClubBySlug()
   }, [clubslug])
 
-  //Load events from API when we know activeClubId
-
+  // Load events from API when we know activeClubId
   useEffect(() => {
     if (!activeClubId) {
       setEvents([])
@@ -226,7 +242,6 @@ export default function EventsPage() {
   }, [activeClubId])
 
   // --- Load MY RSVPs from API once profile is known ---
-
   useEffect(() => {
     if (!profile) return
 
@@ -259,7 +274,6 @@ export default function EventsPage() {
   }, [profile])
 
   // RSVP handling (local state update)
-
   const handleSaveRsvp = (
     eventId: number,
     data: { status: RSVPStatus; note: string },
@@ -271,7 +285,6 @@ export default function EventsPage() {
   }
 
   // Event CRUD
-
   const handleDeleteEvent = async (eventId: number) => {
     try {
       const res = await fetch(`/api/events/${eventId}`, {
@@ -356,6 +369,7 @@ export default function EventsPage() {
       setIsCreating(false)
     }
   }
+
   // Separate upcoming vs past by date
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -556,6 +570,23 @@ export default function EventsPage() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  // If slug is invalid / club not found, show friendly message
+  if (clubError) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 pt-10 pb-6">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-6 text-center">
+          <h1 className="text-lg font-semibold text-red-800 mb-2">
+            {clubError}
+          </h1>
+          <p className="text-sm text-red-700">
+            The club you tried to access doesn&apos;t exist or is no longer
+            available. Please check the URL or switch to another team.
+          </p>
         </div>
       </div>
     )
