@@ -64,6 +64,18 @@ function getInitials(name: string) {
 
 type EventFilter = "upcoming" | "past"
 
+// --- NEW: helpers for consistent sorting by date + time ---
+function getEventDateTime(ev: RsvpEvent) {
+  // ev.date is YYYY-MM-DD and ev.time is HH:mm
+  return new Date(`${ev.date}T${ev.time || "00:00"}`)
+}
+
+function sortEventsByDateTime(list: RsvpEvent[]): RsvpEvent[] {
+  return [...list].sort(
+    (a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime(),
+  )
+}
+
 export default function EventsPage() {
   // read slug from URL params (matches [clubslug] in folder)
   const { clubslug } = useParams() as { clubslug?: string }
@@ -230,7 +242,9 @@ export default function EventsPage() {
 
         const data = (await res.json()) as EventType[]
         const uiEvents = data.map(mapApiEventToUi)
-        setEvents(uiEvents)
+
+        // NEW: ensure events are sorted locally as well
+        setEvents(sortEventsByDateTime(uiEvents))
       } catch (err) {
         console.error("Error fetching events", err)
       } finally {
@@ -343,7 +357,8 @@ export default function EventsPage() {
         const created = (await res.json()) as EventType
         const uiEvent = mapApiEventToUi(created)
 
-        setEvents(prev => [...prev, uiEvent])
+        // NEW: insert + sort so 12:00 comes before 18:00 on the same day
+        setEvents(prev => sortEventsByDateTime([...prev, uiEvent]))
       } else {
         // UPDATE
         const res = await fetch(`/api/events/${updated.id}`, {
@@ -360,7 +375,12 @@ export default function EventsPage() {
         const saved = (await res.json()) as EventType
         const uiEvent = mapApiEventToUi(saved)
 
-        setEvents(prev => prev.map(e => (e.id === uiEvent.id ? uiEvent : e)))
+        // NEW: replace + sort after edit
+        setEvents(prev =>
+          sortEventsByDateTime(
+            prev.map(e => (e.id === uiEvent.id ? uiEvent : e)),
+          ),
+        )
       }
     } catch (err) {
       console.error("Error saving event", err)
