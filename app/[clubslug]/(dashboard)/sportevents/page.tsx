@@ -14,7 +14,6 @@ import {
   Trash2,
   Plus,
 } from "lucide-react"
-import { useParams } from "next/navigation"
 import {
   EventRsvpModal,
   type RsvpEvent,
@@ -23,7 +22,6 @@ import {
 import { EventEditModal } from "@/components/event-edit-modal"
 import { type EventType } from "@/types/events"
 import { type UserProfile, type UserRole } from "@/types/profile"
-import { createClient } from "@/lib/supabase/client"
 import { useParams } from "next/navigation"
 
 // RSVP stored locally for now
@@ -358,25 +356,6 @@ export default function EventsPage() {
       setIsCreating(false)
     }
   }
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .from("club")
-      .select("id")
-      .eq("slug", clubslug)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) {
-          setClub(null)
-        } else {
-          setClub(data)
-        }
-      })
-  }, [clubslug])
-
-  if (!club) return <p>ERROR 404</p>
-
   // Separate upcoming vs past by date
   const today = new Date()
   today.setHours(0, 0, 0, 0)
