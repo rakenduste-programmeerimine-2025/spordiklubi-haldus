@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label"
 import Image from "next/image"
 import GlassButton from "@/components/ui/backbutton"
 import { GlassPanel } from "@/components/ui/glasspanel"
-//import { UploadCloud } from "lucide-react"
 import { SignupButton } from "@/components/ui/signupbutton"
 import { createClient } from "@/lib/supabase/client"
 
@@ -54,37 +53,71 @@ export default function CreateClubPage() {
       setError("Please enter a club name.")
       return
     }
+
+    setError(null)
+    setLoading(true)
+
     const supabase = await createClient()
-    const clubslug = clubName.trim().toLowerCase().replace(/\s+/g, "-")
+    const trimmedName = clubName.trim()
+    const clubslug = trimmedName.toLowerCase().replace(/\s+/g, "-")
+
+    let logoUrl: string | null = null
 
     try {
-      const { data: newClub, error } = await supabase
+      // 1) If user selected a logo, upload to Supabase Storage
+      if (file) {
+        const ext = file.name.split(".").pop() ?? "png"
+        const filePath = `clubs/${clubslug}-${Date.now()}.${ext}`
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("club-logos") // <-- make sure this bucket exists
+          .upload(filePath, file)
+
+        if (uploadError) {
+          console.error("Error uploading club logo:", uploadError)
+          throw new Error("Failed to upload club logo.")
+        }
+
+        const { data: publicData } = supabase.storage
+          .from("club-logos")
+          .getPublicUrl(uploadData.path)
+
+        logoUrl = publicData.publicUrl
+      }
+
+      // 2) Insert club row with logo URL (or null if no file)
+      const { data: newClub, error: insertError } = await supabase
         .from("club")
         .insert({
-          name: clubName,
-          club_logo: file,
+          name: trimmedName,
+          club_logo: logoUrl, // varchar column stores the URL
           slug: clubslug,
         })
         .select()
-      if (error) throw error
+        .single()
+
+      if (insertError) {
+        console.error("Error inserting club:", insertError)
+        throw new Error("Failed to create a club.")
+      }
+
       console.log("club created: ", newClub)
 
-      const clubId = newClub[0].id
+      const clubId = newClub.id
+      localStorage.setItem("pendingClubId", String(clubId))
 
-      localStorage.setItem("pendingClubId", clubId)
+      sessionStorage.setItem("signup_club_name", trimmedName)
+
+      // Keep your little loading pause if you like the feel
+      setTimeout(() => {
+        setLoading(false)
+        router.push(`/auth/sign-up-success`)
+      }, 1000)
     } catch (err) {
       console.error("Failed to create club:", err)
-      setError("failed to create a club")
-      return
-    }
-
-    setLoading(true)
-    sessionStorage.setItem("signup_club_name", clubName.trim())
-
-    setTimeout(() => {
       setLoading(false)
-      router.push(`/auth/sign-up-success`)
-    }, 1000)
+      setError("Failed to create a club. Please try again.")
+    }
   }
 
   return (
@@ -169,15 +202,6 @@ export default function CreateClubPage() {
               </Label>
 
               <div className="flex items-center gap-3">
-                {/* Icon tile upload icon on left */}
-                {/* <div
-                  className="flex items-center justify-center w-16 h-16 rounded-2xl
-                    bg-gradient-to-br from-blue-700/40 via-blue-600/40 to-blue-400/40
-                    border border-blue-300/40 backdrop-blur-[6px] -mt-3"
-                >
-                  <UploadCloud className="w-8 h-8 text-white" />
-                </div> */}
-
                 {/* File picker */}
                 <div className="flex-1">
                   <label
