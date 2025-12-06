@@ -12,7 +12,6 @@ export default async function SettingsPage({
 
   const supabase = await createClient()
 
-  // fetch club by slug
   const { data: club, error: clubError } = await supabase
     .from("club")
     .select("id, slug")
@@ -24,7 +23,6 @@ export default async function SettingsPage({
     notFound()
   }
 
-  // fetch current user's profile + role + memberships
   const {
     data: { user },
     error: userError,
@@ -39,6 +37,7 @@ export default async function SettingsPage({
       `
       id,
       name,
+      email,
       role:role_id (name),
       memberships:member (
         club:club_id (
@@ -56,12 +55,10 @@ export default async function SettingsPage({
     notFound()
   }
 
-  // normalize role
   const roleArray = Array.isArray(profileData.role)
     ? profileData.role
     : [profileData.role]
 
-  // find membership for the current club
   const membership = profileData.memberships.find(m => {
     const clubVal = Array.isArray(m.club) ? m.club[0] : m.club
     return clubVal?.slug === clubslug
@@ -72,12 +69,13 @@ export default async function SettingsPage({
     notFound()
   }
 
-  const clubRole = roleArray[0]?.name ?? "player" // default to "player" if missing
+  const clubRole = roleArray[0]?.name ?? "player"
 
   return (
     <SettingsPageClient
       clubslug={clubslug}
       isCoach={clubRole === "coach"}
+      profile={profileData}
     />
   )
 }
