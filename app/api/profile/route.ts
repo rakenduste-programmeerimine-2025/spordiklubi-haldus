@@ -142,16 +142,17 @@ export async function GET(req: Request) {
   }
 
   // logo can be null -> frontend can show default
-  return NextResponse.json({
+    return NextResponse.json({
     id: profile.id,
     name: profile.name,
     email: profile.email,
     role: roleName, // always "coach" or "player"
     club: {
-      id: activeClub.id,
-      name: activeClub.name,
-      logo: activeClub.club_logo, // can be null -> use default image in UI
-      slug: activeClub.slug,
+    id: activeClub.id,
+    name: activeClub.name,
+    club_logo: activeClub.club_logo, // can be null -> use default image in UI
+    slug: activeClub.slug,
     },
   })
+
 }

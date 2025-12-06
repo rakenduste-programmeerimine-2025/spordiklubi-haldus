@@ -9,7 +9,7 @@ export type UserProfile = {
   club: {
     id: number
     name: string
-    logo: string | null
+    club_logo: string | null
     slug: string
   } | null
 }
