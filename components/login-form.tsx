@@ -124,7 +124,7 @@ export function LoginForm({
 
         router.push(`/${clubData.slug}/dashboard`)
       } else {
-        router.push("/clubs/select")
+        router.push("/club-select")
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
