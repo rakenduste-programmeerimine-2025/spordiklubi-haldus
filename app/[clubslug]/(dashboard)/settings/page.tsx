@@ -14,7 +14,7 @@ export default async function SettingsPage({
 
   const { data: club, error: clubError } = await supabase
     .from("club")
-    .select("id, slug")
+    .select("id, slug, name, club_logo")
     .eq("slug", clubslug)
     .single()
 
@@ -76,6 +76,7 @@ export default async function SettingsPage({
       clubslug={clubslug}
       isCoach={clubRole === "coach"}
       profile={profileData}
+      club={club}
     />
   )
 }

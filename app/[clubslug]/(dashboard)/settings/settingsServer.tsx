@@ -9,10 +9,12 @@ export default function SettingsPageClient({
   clubslug,
   isCoach,
   profile,
+  club,
 }: {
   clubslug: string
   isCoach: boolean
   profile: any
+  club: { id: string; name: string; slug: string; club_logo?: string }
 }) {
   const searchParams = useSearchParams()
   const tab = searchParams.get("tab") || "personal"
@@ -21,7 +23,12 @@ export default function SettingsPageClient({
     <>
       <SettingsTabs isCoach={isCoach} />
       {tab === "personal" && <PersonalSettings profile={profile} />}
-      {tab === "club" && isCoach && <ClubSettings clubslug={clubslug} />}
+      {tab === "club" && isCoach && (
+        <ClubSettings
+          clubslug={clubslug}
+          clubData={club}
+        />
+      )}
     </>
   )
 }
