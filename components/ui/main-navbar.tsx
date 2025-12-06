@@ -60,9 +60,12 @@ export function MainNavbar({ clubslug }: { clubslug: string }) {
   }, [clubslug])
 
   const userRole: UserRole = profile?.role ?? null
-  const clubName = profile?.club?.name ?? "Your club"
-  const clubLogoSrc = profile?.club?.logo ?? "/images/Kuressaare.png"
-  const userFullName = profile?.name ?? "User"
+  const clubName = !profileLoading ? (profile?.club?.name ?? "Your club") : "" // avoid flashing placeholder name
+
+  const clubLogoSrc =
+    !profileLoading && profile?.club?.club_logo ? profile.club.club_logo : null // no image until loaded; fallback only if loaded & null
+
+  const userFullName = !profileLoading ? (profile?.name ?? "") : ""
 
   const roleLabel =
     userRole === "coach" ? "coach" : userRole === "player" ? "player" : ""
@@ -95,50 +98,64 @@ export function MainNavbar({ clubslug }: { clubslug: string }) {
       <div className="flex items-center justify-between px-6 py-4 md:py-4 bg-[#2563EB] text-white">
         {/* Left: logo, club name */}
         <div className="flex items-center gap-4">
-          {/* Logo (no circle, slightly bigger) */}
-          <div className="relative h-16 w-16 overflow-hidden">
-            <Image
-              src={clubLogoSrc}
-              fill
-              alt={`${clubName} logo`}
-              className="object-contain"
-            />
-          </div>
+          {/* While loading: skeleton circle + bar */}
+          {profileLoading ? (
+            <div className="flex items-center gap-4 animate-pulse">
+              <div className="h-16 w-16 rounded-full bg-white/20" />
+              <div className="h-6 w-40 rounded bg-white/20" />
+            </div>
+          ) : (
+            <>
+              <div className="relative h-16 w-16 overflow-hidden">
+                <Image
+                  src={clubLogoSrc ?? "/images/Kuressaare.png"}
+                  fill
+                  alt={`${clubName || "Club"} logo`}
+                  className="object-contain"
+                />
+              </div>
 
-          <p className="font-semibold text-sm sm:text-base md:text-2xl leading-tight">
-            {clubName}
-          </p>
+              <p className="font-semibold text-sm sm:text-base md:text-2xl leading-tight">
+                {clubName}
+              </p>
+            </>
+          )}
         </div>
 
         {/* Right: role badge, user name, dropdown */}
         <div className="relative flex items-center gap-4">
-          <button
-            type="button"
-            onClick={toggleMenu}
-            className="flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 px-3 py-1.5 transition"
-          >
-            {/* Role badge */}
-            {roleLabel && (
-              <span
-                className={`rounded-full px-3 py-1 text-[10px] sm:text-xs font-semibold ${roleBgClass}`}
-              >
-                {roleLabel}
+          {profileLoading ? (
+            <div className="flex items-center gap-3 animate-pulse">
+              <div className="h-8 w-20 rounded-full bg-white/20" />
+              <div className="h-8 w-24 rounded-full bg-white/20" />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={toggleMenu}
+              className="flex items-center gap-2 rounded-full bg:white/10 bg-white/10 hover:bg-white/20 px-3 py-1.5 transition"
+            >
+              {roleLabel && (
+                <span
+                  className={`rounded-full px-3 py-1 text-[10px] sm:text-xs font-semibold ${roleBgClass}`}
+                >
+                  {roleLabel}
+                </span>
+              )}
+
+              <span className="text-sm sm:text-base font-medium whitespace-nowrap">
+                {userFullName}
               </span>
-            )}
 
-            {/* Full name */}
-            <span className="text-sm sm:text-base font-medium whitespace-nowrap">
-              {profileLoading ? "Loading..." : userFullName}
-            </span>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${
+                  menuOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+          )}
 
-            <ChevronDown
-              className={`h-4 w-4 transition-transform ${
-                menuOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {menuOpen && (
+          {!profileLoading && menuOpen && (
             <div className="absolute right-0 top-[110%] mt-1 w-44 rounded-xl bg-white text-gray-800 shadow-lg border border-gray-100 z-50">
               <ul className="py-1 text-sm">
                 <li>
