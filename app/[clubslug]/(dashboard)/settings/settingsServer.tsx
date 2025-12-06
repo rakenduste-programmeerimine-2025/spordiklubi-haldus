@@ -8,9 +8,11 @@ import ClubSettings from "./ClubSettings"
 export default function SettingsPageClient({
   clubslug,
   isCoach,
+  profile,
 }: {
   clubslug: string
   isCoach: boolean
+  profile: any
 }) {
   const searchParams = useSearchParams()
   const tab = searchParams.get("tab") || "personal"
@@ -18,7 +20,7 @@ export default function SettingsPageClient({
   return (
     <>
       <SettingsTabs isCoach={isCoach} />
-      {tab === "personal" && <PersonalSettings />}
+      {tab === "personal" && <PersonalSettings profile={profile} />}
       {tab === "club" && isCoach && <ClubSettings clubslug={clubslug} />}
     </>
   )
