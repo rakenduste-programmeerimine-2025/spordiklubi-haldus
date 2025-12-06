@@ -29,35 +29,46 @@ type ForumPostRow = {
   comments?: ForumCommentRow[] | null
 }
 
-// GET CLUB ID FROM SLUG
-
-async function getClubIdBySlug(slug: string) {
+// ------------------------------------------------------
+// GET CLUB ID FROM SLUG (safe, returns null on invalid slug)
+// ------------------------------------------------------
+async function getClubIdBySlug(slug: string): Promise<number | null> {
   const supabase = createClient()
 
   const { data, error } = await supabase
     .from("club")
     .select("id")
     .eq("slug", slug)
-    .single()
+    .maybeSingle()
 
   if (error) {
-    console.error("Failed to load club by slug:", error)
-    throw new Error("Invalid club slug")
+    console.error("[forumApi] Failed to load club by slug:", error)
+    return null
   }
+
+  if (!data) return null
 
   return data.id as number
 }
 
-// API
-
+// ------------------------------------------------------
+// FORUM API
+// ------------------------------------------------------
 export const forumApi = {
-
+  // ------------------------------
   // GET POSTS (slug-based)
-
-  async getPosts(filters: ForumFilters, slug: string): Promise<ForumPost[]> {
+  // ------------------------------
+  async getPosts(
+    filters: ForumFilters,
+    slug: string
+  ): Promise<ForumPost[]> {
     const supabase = createClient()
 
     const clubId = await getClubIdBySlug(slug)
+    if (!clubId) {
+      // Invalid slug → empty dataset
+      return []
+    }
 
     let query = supabase
       .from("forum_post")
@@ -98,7 +109,11 @@ export const forumApi = {
     }
 
     const { data, error } = await query
-    if (error) throw error
+
+    if (error) {
+      console.error("[forumApi] Failed loading posts:", error)
+      return []
+    }
 
     const rows = (data ?? []) as unknown as ForumPostRow[]
 
@@ -113,7 +128,9 @@ export const forumApi = {
           createdAt: new Date(c.created_at).toLocaleString(),
           authorName:
             c.profile?.name ?? c.profile?.email ?? "Unknown",
-          authorInitials: getInitials(c.profile?.name ?? c.profile?.email),
+          authorInitials: getInitials(
+            c.profile?.name ?? c.profile?.email
+          ),
           authorId: c.profile?.id,
         })) ?? []
 
@@ -124,15 +141,18 @@ export const forumApi = {
         category: row.category as ForumCategory,
         createdAt: new Date(row.created_at).toLocaleString(),
         authorName,
-        authorInitials: getInitials(row.profile?.name ?? row.profile?.email),
+        authorInitials: getInitials(
+          row.profile?.name ?? row.profile?.email
+        ),
         authorId: row.profile?.id,
         replies,
       }
     })
   },
 
-  // CREATE POST (slug-based)
-
+  // ------------------------------
+  // CREATE POST
+  // ------------------------------
   async createPost(
     input: { title: string; category: string; message: string },
     slug: string
@@ -144,6 +164,7 @@ export const forumApi = {
 
     const profileId = auth.user.id
     const clubId = await getClubIdBySlug(slug)
+    if (!clubId) throw new Error("Invalid club slug")
 
     const nowIso = new Date().toISOString()
 
@@ -175,7 +196,14 @@ export const forumApi = {
 
     if (error) throw error
 
-    const profile = data.profile as unknown as ForumProfileRef
+    const rawProfile = data.profile as unknown
+    const profile: ForumProfileRef = isProfile(rawProfile)
+      ? {
+          id: rawProfile.id,
+          name: rawProfile.name ?? null,
+          email: rawProfile.email ?? null,
+        }
+      : null
 
     return {
       id: String(data.id),
@@ -190,14 +218,19 @@ export const forumApi = {
     }
   },
 
-  async reply(postId: string | number, message: string): Promise<ForumReply> {
+  // ------------------------------
+  // ADD REPLY
+  // ------------------------------
+  async reply(
+    postId: string | number,
+    message: string
+  ): Promise<ForumReply> {
     const supabase = createClient()
 
     const { data: auth } = await supabase.auth.getUser()
     if (!auth?.user) throw new Error("Not authenticated")
 
     const profileId = auth.user.id
-
     const nowIso = new Date().toISOString()
 
     const { data, error } = await supabase
@@ -224,7 +257,14 @@ export const forumApi = {
 
     if (error) throw error
 
-    const profile = data.profile as unknown as ForumProfileRef
+    const rawProfile = data.profile as unknown
+    const profile: ForumProfileRef = isProfile(rawProfile)
+      ? {
+          id: rawProfile.id,
+          name: rawProfile.name ?? null,
+          email: rawProfile.email ?? null,
+        }
+      : null
 
     return {
       id: String(data.id),
@@ -235,6 +275,9 @@ export const forumApi = {
     }
   },
 
+  // ------------------------------
+  // DELETE POST
+  // ------------------------------
   async deletePost(postId: string) {
     const supabase = createClient()
     const { error } = await supabase
@@ -245,6 +288,9 @@ export const forumApi = {
     if (error) throw error
   },
 
+  // ------------------------------
+  // DELETE REPLY
+  // ------------------------------
   async deleteReply(replyId: string) {
     const supabase = createClient()
     const { error } = await supabase
@@ -256,6 +302,17 @@ export const forumApi = {
   },
 }
 
+// ------------------------------------------------------
+// HELPERS
+// ------------------------------------------------------
+function isProfile(obj: unknown): obj is NonNullable<ForumProfileRef> {
+  if (!obj || typeof obj !== "object") return false
+  const o = obj as Record<string, unknown>
+  return (
+    typeof o.id === "string" &&
+    ("name" in o || "email" in o)
+  )
+}
 
 function getInitials(input?: string | null): string {
   if (!input) return "U"
@@ -266,6 +323,8 @@ function getInitials(input?: string | null): string {
 
   const parts = trimmed.split(/\s+/)
   const first = parts[0]?.[0] ?? ""
-  const last = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : ""
+  const last =
+    parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : ""
+
   return (first + last).toUpperCase() || "U"
 }

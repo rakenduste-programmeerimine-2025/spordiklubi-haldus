@@ -1,78 +1,184 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter, useParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 
-const mockTeams = [
-  {
-    id: 1,
-    name: "FC Kuressaare U10",
-    logo: "/images/kure_asendus.png",
-  },
-  {
-    id: 2,
-    name: "FC Kuressaare U12",
-    logo: "/images/kure_asendus.png",
-  },
-  {
-    id: 3,
-    name: "FC Kuressaare U8",
-    logo: "/images/kure_asendus.png",
-  },
-]
+const supabase = createClient()
+
+type Club = {
+  id: number
+  name: string
+  slug: string
+  club_logo: string | null
+}
+
+type MemberWithClub = {
+  club: Club | null
+}
 
 export default function SwitchTeamPage() {
+  const router = useRouter()
+  const params = useParams<{ clubslug: string }>()
+  const activeSlug = params.clubslug
+
+  const [clubs, setClubs] = useState<Club[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isCoach, setIsCoach] = useState(false)
+
+  // LOAD USER + PROFILE ROLE
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true)
+
+      // 1) Load user
+      const {
+        data: { user },
+        error: userErr,
+      } = await supabase.auth.getUser()
+
+      if (userErr || !user) {
+        console.error("Not authenticated")
+        return
+      }
+
+      // 2) Load profile (to detect role)
+      const { data: profile, error: profErr } = await supabase
+        .from("profile")
+        .select("role_id")
+        .eq("id", user.id)
+        .single()
+
+      if (profErr) {
+        console.error("Failed to load profile role", profErr)
+      } else {
+        setIsCoach(profile?.role_id === 1) // 1 = coach
+      }
+
+      // 3) Load membership clubs
+      const { data: memberships, error: memErr } = await supabase
+        .from("member")
+        .select(`
+          club:club_id (
+            id,
+            name,
+            slug,
+            club_logo
+          )
+        `)
+        .eq("profile_id", user.id)
+        .returns<MemberWithClub[]>()
+
+      if (memErr) {
+        console.error("Failed to load user clubs", memErr)
+      } else {
+        const clubList =
+          (memberships ?? [])
+            .map((row) => row.club)
+            .filter((c): c is Club => c !== null)
+
+        setClubs(clubList)
+      }
+
+      setLoading(false)
+    }
+
+    loadData()
+  }, [])
+
+  // HANDLE SELECT CLUB
+  function handleSelectClub(slug: string) {
+    router.push(`/${slug}/dashboard`)
+  }
+
+  // DEFAULT LOGO FALLBACK
+  function getLogoSrc(logo: string | null) {
+    return logo && logo.length > 0 ? logo : "/images/syncc.png"
+  }
+
+  // RENDER
+  if (loading) {
+    return (
+      <div className="flex justify-center pt-10 text-gray-600">
+        Loading your teams...
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col items-center pt-4">
-      <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
+    <div className="flex flex-col items-center pt-6 px-4">
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
         Switch Team
       </h1>
 
-      <p className="text-gray-500 mb-8 text-center">
+      <p className="text-gray-500 mb-10 text-center">
         Choose which team you want to manage
       </p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
-        {mockTeams.map(team => (
-          <Link
-            key={team.id}
-            href={`/dashboard?team=${team.id}`}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-10">
+        {clubs.map((club) => (
+          <div
+            key={club.id}
+            onClick={() => handleSelectClub(club.slug)}
             className="
-              group flex flex-col items-center cursor-pointer
+              cursor-pointer flex flex-col items-center
               transition-transform hover:scale-105
             "
           >
             <div
               className="
-                relative h-28 w-28 sm:h-32 sm:w-32 rounded-xl overflow-hidden 
-                border-2 border-transparent group-hover:border-blue-500
-                transition
-              "
+              relative h-28 w-28 sm:h-32 sm:w-32 rounded-xl overflow-hidden 
+              border-2 border-transparent hover:border-blue-500
+              transition
+            "
             >
               <Image
-                src={team.logo}
+                src={getLogoSrc(club.club_logo)}
                 fill
-                alt={team.name}
+                alt={club.name}
                 className="object-cover"
               />
             </div>
 
             <p
               className="
-                mt-3 text-sm sm:text-base font-medium text-gray-800
-                group-hover:text-blue-600 transition
-              "
+              mt-3 text-sm sm:text-base font-medium text-gray-800
+              group-hover:text-blue-600 transition
+            "
             >
-              {team.name}
+              {club.name}
+            </p>
+
+            {/* ACTIVE LABEL */}
+            {club.slug === activeSlug && (
+              <span className="mt-1 text-xs text-blue-600 font-semibold">
+                Active
+              </span>
+            )}
+          </div>
+        ))}
+
+        {/* CREATE CLUB — ONLY IF COACH */}
+        {isCoach && (
+          <Link
+            href="/auth/sign-up/createclub"
+            className="
+              flex flex-col items-center justify-center
+              rounded-xl border-2 border-dashed border-blue-400 
+              h-28 w-28 sm:h-32 sm:w-32
+              hover:bg-blue-50 hover:border-blue-500
+              transition cursor-pointer
+            "
+          >
+            <span className="text-4xl text-blue-600">＋</span>
+            <p className="mt-1 font-medium text-blue-600 text-sm">
+              Create Club
             </p>
           </Link>
-        ))}
+        )}
       </div>
-
-      {/* <Link
-        href="/dashboard"
-        className="mt-10 text-blue-600 hover:underline text-sm"
-      >
-        ← Back to dashboard
-      </Link> */}
     </div>
   )
 }
