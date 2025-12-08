@@ -53,7 +53,7 @@ export default function HeroSection() {
             priority
           />
         </div>
-        <h1 className="text-white text-4xl md:text-5xl lg:text-5xl 2xl:text-6xl font-bold tracking-tight -mt-4 2xl:-mt-5">
+        <h1 className="text-white text-4xl md:text-5xl lg:text-5xl 2xl:text-6xl font-bold tracking-tight -mt-4 2xl:-mt-4">
           SPORTSYNC
         </h1>
       </div>
@@ -63,6 +63,7 @@ export default function HeroSection() {
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
+        className="2xl:-mt-4"
       >
         <GlassPanel className="px-6 py-6 md:px-8 md:py-6 max-w-xl 2xl:px-12 2xl:py-12 2xl:max-w-3xl">
           <h1 className="text-white text-3xl md:text-4xl lg:text-5xl 2xl:text-6xl font-semibold leading-tight mb-6 2xl:max-w-xl mx-auto md:mb-8 2xl:mb-6">
@@ -78,7 +79,7 @@ export default function HeroSection() {
           </p>
 
           <Link href="/auth/sign-up">
-            <GlassButton className="px-7 py-3 text-lg md:text-xl 2xl:px-10 2xl:py-4 2xl:text-2xl xl:mt-4">
+            <GlassButton className="px-7 py-3 text-lg md:text-xl 2xl:px-10 2xl:py-4 2xl:text-2xl xl:mt-1">
               Get Started
             </GlassButton>
           </Link>
@@ -90,7 +91,7 @@ export default function HeroSection() {
         initial={false}
         animate={{ opacity: showArrow ? 1 : 0 }}
         transition={{ duration: 0.3 }}
-        className="mt-0 md:mt-1 lg:mt-2 2xl:mt-6 cursor-pointer"
+        className="mt-0 md:mt-1 lg:mt-2 2xl:mt-1 cursor-pointer"
         style={{ pointerEvents: showArrow ? "auto" : "none" }}
         onClick={() => {
           const section = document.getElementById("features")

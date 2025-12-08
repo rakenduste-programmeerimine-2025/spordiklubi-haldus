@@ -30,7 +30,7 @@ export default function Navbar() {
         sm:px-6 sm:py-3.5
         lg:px-8 lg:py-4
         xl:px-10 xl:py-5
-        2xl:px-12 2xl:py-8
+        2xl:px-12 2xl:py-5
         bg-transparent backdrop-blur-sm
       "
     >
