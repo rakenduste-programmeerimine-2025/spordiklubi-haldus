@@ -24,15 +24,11 @@ export function GlassPanelSmall({
   return (
     <Card
       className={cn(
-        // 👉 SAME CORNER RADIUS AS MAIN GLASSPANEL
         "relative border-none rounded-3xl max-w-sm w-full",
-
-        // same styling
         "bg-gradient-to-br from-blue-700/70 via-blue-600/60 to-blue-400/50",
         "backdrop-blur-[10px]",
         "ring-2 ring-inset ring-blue-400/60",
         "shadow-[inset_0_2px_4px_rgba(59,130,246,.25),0_0_8px_rgba(37,99,235,.4)]",
-
         withHoverGlow &&
           "transition duration-300 ease-[cubic-bezier(.25,1,.5,1)] hover:shadow-[inset_0_2px_6px_rgba(59,130,246,.35),0_0_18px_rgba(59,130,246,.6)]",
 
