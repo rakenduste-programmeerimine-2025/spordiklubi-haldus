@@ -24,7 +24,7 @@ export function GlassPanel({
   return (
     <Card
       className={cn(
-        "relative border-none rounded-3xl w-[75vw] max-w-[560px]",
+        "relative border-none rounded-3xl w-[75vw] 2xl:w-[35vw] max-w-[560px]",
         "bg-gradient-to-br from-blue-700/70 via-blue-600/60 to-blue-400/50",
         "backdrop-blur-[10px]",
         "ring-2 ring-inset ring-blue-400/60",
