@@ -1,6 +1,6 @@
 "use client"
 
-import SettingsTabs from "@/components/settingsTabs"
+import SettingsTabs from "@/components/ui/settingstabs"
 import { useSearchParams } from "next/navigation"
 import PersonalSettings from "./PersonalSettings"
 import ClubSettings from "./ClubSettings"
