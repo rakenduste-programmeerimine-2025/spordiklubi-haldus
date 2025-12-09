@@ -4,7 +4,8 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { generateSlug } from "@/lib/slug"
 import { createClient } from "@/lib/supabase/client"
 import { redirect } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { Trash2 } from "lucide-react"
 
 export default function ClubSettings({
   clubslug,
@@ -21,6 +22,22 @@ export default function ClubSettings({
   const [members, setMembers] = useState<any[]>([])
   const textToCopy = token
   const supabase = createClient()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const baseBtn =
+    "inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white bg-[#3156ff] hover:bg-[#2442cc] transition"
+
+  const inputClass =
+    "w-full rounded-2xl bg-gray-100 px-4 py-2 text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+
+  function getInitials(name?: string | null) {
+    if (!name) return "??"
+    const parts = name.trim().split(" ")
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
+    return (
+      parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
+    ).toUpperCase()
+  }
 
   async function uploadLogo(file: File, clubId: string) {
     const filePath = `club-logos/${clubId}-${Date.now()}`
@@ -105,9 +122,7 @@ export default function ClubSettings({
   }, [clubId])
 
   const handleCopy = async () => {
-    if (!textToCopy) {
-      return
-    }
+    if (!textToCopy) return
     try {
       await navigator.clipboard.writeText(textToCopy)
       setCopied(true)
@@ -144,57 +159,95 @@ export default function ClubSettings({
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-blue-100 p-4 rounded-xl text-center">
-          <div className="text-2xl font-bold">{memberStats.total}</div>
-          <div className="text-gray-600 text-sm">Total members</div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-3xl bg-[#3156ff] px-6 py-6 text-center text-white shadow-md">
+          <div className="text-3xl font-bold">{memberStats.total}</div>
+          <div className="text-sm opacity-90">Total members</div>
         </div>
-        <div className="bg-green-100 p-4 rounded-xl text-center">
-          <div className="text-2xl font-bold">{memberStats.players}</div>
-          <div className="text-gray-600 text-sm">Players</div>
+        <div className="rounded-3xl bg-[#16A34A] px-6 py-6 text-center text-white shadow-md">
+          <div className="text-3xl font-bold">{memberStats.players}</div>
+          <div className="text-sm opacity-90">Players</div>
         </div>
-        <div className="bg-orange-100 p-4 rounded-xl text-center">
-          <div className="text-2xl font-bold">{memberStats.coaches}</div>
-          <div className="text-gray-600 text-sm">Coaches</div>
+        <div className="rounded-3xl bg-[#FB923C] px-6 py-6 text-center text-white shadow-md">
+          <div className="text-3xl font-bold">{memberStats.coaches}</div>
+          <div className="text-sm opacity-90">Coaches</div>
         </div>
       </div>
 
       {/* Club Info */}
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold mb-4">Club Information</h2>
+      <Card className="border-none bg-white shadow-sm rounded-3xl">
+        <CardHeader className="pb-2">
+          <h2 className="text-xl font-semibold">Club information</h2>
+          <p className="text-sm text-gray-500">
+            Manage your club&apos;s name and logo
+          </p>
         </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <label className="text-sm text-gray-600">Club name: </label>
+        <CardContent className="space-y-4 pt-4">
+          {/* Club name */}
+          <div className="space-y-1 w-[468px]">
+            <label className="text-sm font-medium text-gray-700">
+              Club name
+            </label>
             <input
-              className="input"
+              className={inputClass}
               value={clubName ?? ""}
               onChange={e => setClubName(e.target.value)}
             />
           </div>
 
-          <div className="mb-4">
-            <label className="text-sm text-gray-600">Club logo: </label>
-            <img
-              src={
-                clubLogo
-                  ? URL.createObjectURL(clubLogo)
-                  : clubData.club_logo || "/images/syncc.png"
-              }
-              alt="Club Logo"
-              className="h-16 w-16 object-cover rounded"
-            />
-            <input
-              type="file"
-              className="w-full text-sm"
-              onChange={e => setClubLogo(e.target.files?.[0] ?? null)}
-            />
+          {/* Club logo */}
+          <div className="space-y-2 w-[468px]">
+            <label className="text-sm font-medium text-gray-700">
+              Club logo
+            </label>
+
+            <div className="rounded-3xl bg-gray-100 px-5 py-5 flex items-center gap-6">
+              <img
+                src={
+                  clubLogo
+                    ? URL.createObjectURL(clubLogo)
+                    : clubData.club_logo || "/images/syncc.png"
+                }
+                alt="Club Logo"
+                className="h-24 w-24 object-contain rounded-xl"
+              />
+
+              <div className="flex flex-col pt-3">
+                {/* Hidden input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={e => setClubLogo(e.target.files?.[0] ?? null)}
+                />
+
+                {/* Choose file button */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="
+                  w-fit 
+                  inline-flex items-center justify-center
+                  gap-2 rounded-full px-4 py-1.5
+                  text-sm font-medium text-white
+                bg-[#3156ff] hover:bg-[#2442cc] 
+                  transition
+                  "
+                >
+                  Choose file
+                </button>
+
+                {/* text */}
+                <p className="text-xs text-gray-500 mt-2">
+                  PNG, JPG or SVG. Max 5MB
+                </p>
+              </div>
+            </div>
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex justify-end pt-2">
           <button
-            className="bg-blue-600 text-white px-6 py-2 rounded-md"
+            className={baseBtn}
             onClick={handleSaveClub}
           >
             Save club settings
@@ -203,54 +256,102 @@ export default function ClubSettings({
       </Card>
 
       {/* Invite Link */}
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold mb-4">Invite Team Members</h2>
+      <Card className="border-none bg-white shadow-sm rounded-3xl">
+        <CardHeader className="pb-2">
+          <h2 className="text-xl font-semibold">Invite team members</h2>
+          <p className="text-sm text-gray-500">
+            Share this link to invite players to your team
+          </p>
         </CardHeader>
-        <CardContent>
-          <div>{token}</div>
-          <div className="flex gap-2">
-            {token ? (
-              <button
-                onClick={handleCopy}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-              >
-                {copied ? "Copied!" : "copy"}
-              </button>
-            ) : (
-              <button
-                onClick={generateInvite}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-              >
-                Generate Invite Link
-              </button>
-            )}
+        <CardContent className="pt-4">
+          <div className="space-y-2 max-w-xl">
+            <label className="text-sm font-medium text-gray-700">
+              Invite link
+            </label>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <input
+                type="text"
+                readOnly
+                value={token ?? ""}
+                placeholder="Generate an invite link"
+                className={`${inputClass} flex-1`}
+              />
+              {token ? (
+                <button
+                  onClick={handleCopy}
+                  className={baseBtn}
+                >
+                  {copied ? "Copied!" : "Copy link"}
+                </button>
+              ) : (
+                <button
+                  onClick={generateInvite}
+                  className={baseBtn}
+                >
+                  Generate invite link
+                </button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Members */}
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold mb-4">Team Members</h2>
+      <Card className="border-none bg-white shadow-sm rounded-3xl">
+        <CardHeader className="pb-2">
+          <h2 className="text-xl font-semibold">Team members</h2>
+          <p className="text-sm text-gray-500">Manage your team members</p>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {members.map(m => (
-              <div
-                key={m.id}
-                className="flex justify-between bg-gray-100 p-3 rounded-lg"
-              >
-                <span>
-                  {m.profile.name} ({m.profile.role?.name || "Player"})
-                </span>
-                <button className="text-sm text-gray-600">⋮</button>
-              </div>
-            ))}
-            {members.length === 0 && (
-              <p className="text-gray-500">No members yet.</p>
-            )}
-          </div>
+
+        <CardContent className="pt-4">
+          {members.length === 0 ? (
+            <p className="text-sm text-gray-500">No members yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {members.map(m => {
+                const role =
+                  m.profile.role?.name === "coach" ? "coach" : "player"
+                const roleLabel = role === "coach" ? "Coach" : "Player"
+                const roleBg =
+                  role === "coach" ? "bg-[#FB923C]" : "bg-[#16A34A]"
+
+                return (
+                  <div
+                    key={m.id}
+                    className="flex items-center justify-between rounded-3xl bg-gray-100 px-4 py-3 w-full max-w-xl"
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Initials circle */}
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold text-gray-800">
+                        {getInitials(m.profile.name)}
+                      </div>
+
+                      {/* Name + role pill */}
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-medium text-gray-900">
+                          {m.profile.name}
+                        </span>
+                        <span
+                          className={`inline-flex items-center w-fit rounded-full px-3 py-0.5 text-[11px] font-semibold text-white ${roleBg} whitespace-nowrap`}
+                        >
+                          {roleLabel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Delete button */}
+                    <button
+                      type="button"
+                      className="text-gray-500 hover:text-red-500 transition"
+                      aria-label="Remove member"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
