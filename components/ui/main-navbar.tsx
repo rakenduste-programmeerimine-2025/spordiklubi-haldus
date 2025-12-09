@@ -13,7 +13,7 @@ import {
   Shuffle,
 } from "lucide-react"
 import { motion } from "framer-motion"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { usePathname } from "next/navigation"
 import { LogoutButton } from "../logout-button"
 import type { UserProfile, UserRole } from "@/types/profile"
@@ -27,43 +27,61 @@ export function MainNavbar({ clubslug }: { clubslug: string }) {
 
   const toggleMenu = () => setMenuOpen(prev => !prev)
 
-  // Load profile from /api/profile, scoped to clubslug
-  useEffect(() => {
-    const fetchProfile = async () => {
-      setProfileLoading(true)
-      try {
-        const res = await fetch(
-          `/api/profile?clubSlug=${encodeURIComponent(clubslug)}`,
+  // 👉 reusable fetch function
+  const fetchProfile = useCallback(async () => {
+    if (!clubslug) return
+
+    setProfileLoading(true)
+    try {
+      const res = await fetch(
+        `/api/profile?clubSlug=${encodeURIComponent(clubslug)}`,
+      )
+
+      if (!res.ok) {
+        console.error(
+          "Failed to fetch profile in navbar:",
+          res.status,
+          await res.text(),
         )
-
-        if (!res.ok) {
-          console.error(
-            "Failed to fetch profile in navbar:",
-            res.status,
-            await res.text(),
-          )
-          return
-        }
-
-        const data = (await res.json()) as UserProfile
-        setProfile(data)
-      } catch (err) {
-        console.error("Error fetching profile in navbar", err)
-      } finally {
-        setProfileLoading(false)
+        return
       }
-    }
 
-    if (clubslug) {
-      fetchProfile()
+      const data = (await res.json()) as UserProfile
+      setProfile(data)
+    } catch (err) {
+      console.error("Error fetching profile in navbar", err)
+    } finally {
+      setProfileLoading(false)
     }
   }, [clubslug])
 
+  // initial load + on club change
+  useEffect(() => {
+    fetchProfile()
+  }, [fetchProfile])
+
+  // 🔵 listen for profile updates from settings
+  useEffect(() => {
+    const handler = () => {
+      fetchProfile()
+    }
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("profile-updated", handler)
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("profile-updated", handler)
+      }
+    }
+  }, [fetchProfile])
+
   const userRole: UserRole = profile?.role ?? null
-  const clubName = !profileLoading ? (profile?.club?.name ?? "Your club") : "" // avoid flashing placeholder name
+  const clubName = !profileLoading ? (profile?.club?.name ?? "Your club") : ""
 
   const clubLogoSrc =
-    !profileLoading && profile?.club?.club_logo ? profile.club.club_logo : null // no image until loaded; fallback only if loaded & null
+    !profileLoading && profile?.club?.club_logo ? profile.club.club_logo : null
 
   const userFullName = !profileLoading ? (profile?.name ?? "") : ""
 
@@ -133,7 +151,7 @@ export function MainNavbar({ clubslug }: { clubslug: string }) {
             <button
               type="button"
               onClick={toggleMenu}
-              className="flex items-center gap-2 rounded-full bg:white/10 bg-white/10 hover:bg-white/20 px-3 py-1.5 transition"
+              className="flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 px-3 py-1.5 transition"
             >
               {roleLabel && (
                 <span
