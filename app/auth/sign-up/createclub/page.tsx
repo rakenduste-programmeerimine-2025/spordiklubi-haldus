@@ -64,6 +64,19 @@ export default function CreateClubPage() {
     let logoUrl: string | null = null
 
     try {
+      const { data: existingClub, error: existingError } = await supabase
+        .from("club")
+        .select("id")
+        .or(`name.eq.${trimmedName},slug.eq.${clubslug}`)
+        .maybeSingle()
+
+      if (existingError) throw existingError
+
+      if (existingClub) {
+        setLoading(false)
+        setError("A club with this name already exists.")
+        return
+      }
       // 1) If user selected a logo, upload to Supabase Storage
       if (file) {
         const ext = file.name.split(".").pop() ?? "png"
