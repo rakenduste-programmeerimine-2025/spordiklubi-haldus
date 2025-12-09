@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SignupButton } from "@/components/ui/signupbutton"
 import { createClient } from "@/lib/supabase/client"
+import { GlassPanel } from "@/components/ui/glasspanel"
 
 export default function JoinClubPage() {
   const [token, setToken] = useState("")
@@ -34,31 +35,49 @@ export default function JoinClubPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-md p-6 bg-white/10 rounded-lg">
-        <h2 className="text-xl font-bold mb-4 text-white">Join a Club</h2>
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <GlassPanel
+        heading="Join a Club"
+        headerClassName="pb-1"
+        contentClassName="pt-2"
+      >
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <Label
+              htmlFor="token"
+              className="text-white/90"
+            >
+              Invite Token
+            </Label>
 
-        <Label
-          htmlFor="token"
-          className="text-white/90"
-        >
-          Invite Token
-        </Label>
-        <Input
-          id="token"
-          value={token}
-          onChange={e => setToken(e.target.value)}
-          placeholder="Paste your invite token here"
-          className="mt-1 mb-4"
-        />
+            <Input
+              id="token"
+              value={token}
+              onChange={e => setToken(e.target.value)}
+              placeholder="Paste your invite token here"
+              className="
+                mt-1
+                bg-white/10
+                border border-white/20
+                text-white
+                placeholder:text-white/50
+                focus-visible:ring-0
+                focus-visible:border-black/40
+                backdrop-blur-sm
+              "
+            />
+          </div>
 
-        {error && <p className="text-red-400 mb-4">{error}</p>}
+          {error && <p className="text-red-200 text-sm">{error}</p>}
 
-        <SignupButton
-          label="Join Club"
-          onClick={handleJoin}
-        />
-      </div>
+          <div className="mt-4 flex justify-center">
+            <SignupButton
+              label="Join Club"
+              onClick={handleJoin}
+            />
+          </div>
+        </div>
+      </GlassPanel>
     </div>
   )
 }
