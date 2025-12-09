@@ -184,7 +184,7 @@ export default function ClubSettings({
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           {/* Club name */}
-          <div className="space-y-1 max-w-lg">
+          <div className="space-y-1 w-[468px]">
             <label className="text-sm font-medium text-gray-700">
               Club name
             </label>
@@ -196,12 +196,12 @@ export default function ClubSettings({
           </div>
 
           {/* Club logo */}
-          <div className="space-y-2 max-w-lg">
+          <div className="space-y-2 w-[468px]">
             <label className="text-sm font-medium text-gray-700">
               Club logo
             </label>
 
-            <div className="rounded-2xl bg-gray-100 px-4 py-4 flex items-center gap-4">
+            <div className="rounded-3xl bg-gray-100 px-5 py-5 flex items-center gap-6">
               <img
                 src={
                   clubLogo
@@ -212,7 +212,8 @@ export default function ClubSettings({
                 className="h-24 w-24 object-contain rounded-xl"
               />
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col pt-3">
+                {/* Hidden input */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -220,19 +221,24 @@ export default function ClubSettings({
                   onChange={e => setClubLogo(e.target.files?.[0] ?? null)}
                 />
 
+                {/* Smaller button */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="
-          inline-flex items-center justify-center gap-2
-          rounded-full px-4 py-2 text-sm font-medium text-white
-          bg-[#3156ff] hover:bg-[#2442cc] transition
-        "
+                  w-fit 
+                  inline-flex items-center justify-center
+                  gap-2 rounded-full px-4 py-1.5
+                  text-sm font-medium text-white
+                bg-[#3156ff] hover:bg-[#2442cc] 
+                  transition
+                  "
                 >
                   Choose file
                 </button>
 
-                <p className="text-xs text-gray-500">
+                {/* Move text down slightly */}
+                <p className="text-xs text-gray-500 mt-2">
                   PNG, JPG or SVG. Max 5MB
                 </p>
               </div>
@@ -296,48 +302,56 @@ export default function ClubSettings({
           <h2 className="text-xl font-semibold">Team members</h2>
           <p className="text-sm text-gray-500">Manage your team members</p>
         </CardHeader>
+
         <CardContent className="pt-4">
-          <div className="space-y-3">
-            {members.map(m => {
-              const role = m.profile.role?.name === "coach" ? "coach" : "player"
-              const roleLabel = role === "coach" ? "Coach" : "Player"
-              const roleBg = role === "coach" ? "bg-[#FB923C]" : "bg-[#16A34A]"
+          {members.length === 0 ? (
+            <p className="text-sm text-gray-500">No members yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {members.map(m => {
+                const role =
+                  m.profile.role?.name === "coach" ? "coach" : "player"
+                const roleLabel = role === "coach" ? "Coach" : "Player"
+                const roleBg =
+                  role === "coach" ? "bg-[#FB923C]" : "bg-[#16A34A]"
 
-              return (
-                <div
-                  key={m.id}
-                  className="flex items-center justify-between rounded-2xl bg-gray-100 px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold text-gray-800">
-                      {getInitials(m.profile.name)}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm font-medium text-gray-900">
-                        {m.profile.name}
-                      </span>
-                      <span
-                        className={`inline-flex items-center w-fit rounded-full px-2 py-0.5 text-[12px] font-semibold text-white ${roleBg}`}
-                      >
-                        {roleLabel}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="text-gray-500 hover:text-red-500 transition"
-                    aria-label="Remove member"
+                return (
+                  <div
+                    key={m.id}
+                    className="flex items-center justify-between rounded-3xl bg-gray-100 px-4 py-3 w-full max-w-xl"
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              )
-            })}
-            {members.length === 0 && (
-              <p className="text-sm text-gray-500">No members yet.</p>
-            )}
-          </div>
+                    <div className="flex items-center gap-3">
+                      {/* Initials circle */}
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-300 text-sm font-semibold text-gray-800">
+                        {getInitials(m.profile.name)}
+                      </div>
+
+                      {/* Name + role pill */}
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-medium text-gray-900">
+                          {m.profile.name}
+                        </span>
+                        <span
+                          className={`inline-flex items-center w-fit rounded-full px-3 py-0.5 text-[11px] font-semibold text-white ${roleBg} whitespace-nowrap`}
+                        >
+                          {roleLabel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Delete button */}
+                    <button
+                      type="button"
+                      className="text-gray-500 hover:text-red-500 transition"
+                      aria-label="Remove member"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
