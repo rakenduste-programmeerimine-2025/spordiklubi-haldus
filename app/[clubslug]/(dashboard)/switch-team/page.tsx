@@ -60,24 +60,25 @@ export default function SwitchTeamPage() {
       // 3) Load membership clubs
       const { data: memberships, error: memErr } = await supabase
         .from("member")
-        .select(`
+        .select(
+          `
           club:club_id (
             id,
             name,
             slug,
             club_logo
           )
-        `)
+        `,
+        )
         .eq("profile_id", user.id)
         .returns<MemberWithClub[]>()
 
       if (memErr) {
         console.error("Failed to load user clubs", memErr)
       } else {
-        const clubList =
-          (memberships ?? [])
-            .map((row) => row.club)
-            .filter((c): c is Club => c !== null)
+        const clubList = (memberships ?? [])
+          .map(row => row.club)
+          .filter((c): c is Club => c !== null)
 
         setClubs(clubList)
       }
@@ -118,7 +119,7 @@ export default function SwitchTeamPage() {
       </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-10">
-        {clubs.map((club) => (
+        {clubs.map(club => (
           <div
             key={club.id}
             onClick={() => handleSelectClub(club.slug)}
@@ -163,7 +164,7 @@ export default function SwitchTeamPage() {
         {/* CREATE CLUB — ONLY IF COACH */}
         {isCoach && (
           <Link
-            href="/auth/sign-up/createclub"
+            href="/auth/sign-up/createclub?from=app"
             className="
               flex flex-col items-center justify-center
               rounded-xl border-2 border-dashed border-blue-400 
