@@ -64,6 +64,7 @@ export default function ClubSettings({
       return
     }
 
+    const newSlug = generateSlug(clubName)
     let logoUrl = clubData.club_logo || null
 
     if (clubLogo instanceof File && clubId) {
@@ -73,6 +74,24 @@ export default function ClubSettings({
         alert("Failed to upload club logo")
         return
       }
+    }
+
+    const { data: existing, error: existingErr } = await supabase
+      .from("club")
+      .select("id, name")
+      .or(`name.eq.${clubName},slug.eq.${newSlug}`)
+      .neq("id", clubId)
+      .maybeSingle()
+
+    if (existingErr) {
+      console.error(existingErr)
+      alert("Error checking existing club name.")
+      return
+    }
+
+    if (existing) {
+      alert("A club with this name already exists.")
+      return
     }
 
     const res = await fetch("/api/clubs/update", {
@@ -91,7 +110,6 @@ export default function ClubSettings({
       return
     }
 
-    const newSlug = generateSlug(clubName)
     redirect(`/${newSlug}/settings`)
   }
 
