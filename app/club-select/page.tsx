@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -19,46 +19,35 @@ type MemberWithClub = {
   club: Club | null
 }
 
-export default function SwitchTeamPage() {
+export default function ClubSelectPage() {
   const router = useRouter()
-  const params = useParams<{ clubslug: string }>()
-  const activeSlug = params.clubslug
 
   const [clubs, setClubs] = useState<Club[]>([])
   const [loading, setLoading] = useState(true)
   const [isCoach, setIsCoach] = useState(false)
 
-  // LOAD USER + PROFILE ROLE
   useEffect(() => {
     async function loadData() {
       setLoading(true)
 
-      // 1) Load user
       const {
         data: { user },
-        error: userErr,
       } = await supabase.auth.getUser()
 
-      if (userErr || !user) {
-        console.error("Not authenticated")
+      if (!user) {
+        setLoading(false)
         return
       }
 
-      // 2) Load profile (to detect role)
-      const { data: profile, error: profErr } = await supabase
+      const { data: profile } = await supabase
         .from("profile")
         .select("role_id")
         .eq("id", user.id)
         .single()
 
-      if (profErr) {
-        console.error("Failed to load profile role", profErr)
-      } else {
-        setIsCoach(profile?.role_id === 1) // 1 = coach
-      }
+      setIsCoach(profile?.role_id === 1)
 
-      // 3) Load membership clubs
-      const { data: memberships, error: memErr } = await supabase
+      const { data: memberships } = await supabase
         .from("member")
         .select(
           `
@@ -73,112 +62,92 @@ export default function SwitchTeamPage() {
         .eq("profile_id", user.id)
         .returns<MemberWithClub[]>()
 
-      if (memErr) {
-        console.error("Failed to load user clubs", memErr)
-      } else {
-        const clubList = (memberships ?? [])
-          .map(row => row.club)
-          .filter((c): c is Club => c !== null)
+      const clubList =
+        memberships?.map(m => m.club).filter((c): c is Club => c !== null) ?? []
 
-        setClubs(clubList)
-      }
-
+      setClubs(clubList)
       setLoading(false)
     }
 
     loadData()
   }, [])
 
-  // HANDLE SELECT CLUB
   function handleSelectClub(slug: string) {
     router.push(`/${slug}/dashboard`)
   }
 
-  // DEFAULT LOGO FALLBACK
   function getLogoSrc(logo: string | null) {
     return logo && logo.length > 0 ? logo : "/images/syncc.png"
   }
 
-  // RENDER
   if (loading) {
     return (
-      <div className="flex justify-center pt-10 text-gray-600">
-        Loading your teams...
+      <div className="min-h-screen w-full bg-[#f7f6fb] flex items-center justify-center text-gray-600">
+        Loading your clubs...
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col items-center pt-6 px-4">
-      <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-        Switch Team
-      </h1>
+    <div className="min-h-screen w-full bg-[#f7f6fb] flex items-start justify-center pt-[195px] px-4">
+      <div className="flex flex-col items-center">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
+          Select Your Club
+        </h1>
 
-      <p className="text-gray-500 mb-10 text-center">
-        Choose which team you want to manage
-      </p>
+        <p className="text-gray-500 mb-10 text-center">
+          Choose which club you want to manage
+        </p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-10">
-        {clubs.map(club => (
-          <div
-            key={club.id}
-            onClick={() => handleSelectClub(club.slug)}
-            className="
-              cursor-pointer flex flex-col items-center
-              transition-transform hover:scale-105
-            "
-          >
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-10">
+          {clubs.map(club => (
             <div
+              key={club.id}
+              onClick={() => handleSelectClub(club.slug)}
               className="
-              relative h-28 w-28 sm:h-32 sm:w-32 rounded-xl overflow-hidden 
-              border-2 border-transparent hover:border-blue-500
-              transition
-            "
+                cursor-pointer flex flex-col items-center
+                transition-transform hover:scale-105
+              "
             >
-              <Image
-                src={getLogoSrc(club.club_logo)}
-                fill
-                alt={club.name}
-                className="object-cover"
-              />
+              <div
+                className="
+                  relative h-28 w-28 sm:h-32 sm:w-32 rounded-3xl
+                  border-2 border-transparent hover:border-blue-500
+                  transition flex items-center justify-center
+                "
+              >
+                <Image
+                  src={getLogoSrc(club.club_logo)}
+                  fill
+                  alt={club.name}
+                  className="object-contain p-2 rounded-3xl"
+                />
+              </div>
+
+              <p className="mt-3 text-sm sm:text-base font-medium text-gray-800">
+                {club.name}
+              </p>
             </div>
+          ))}
 
-            <p
+          {isCoach && (
+            <Link
+              href="/auth/sign-up/createclub"
               className="
-              mt-3 text-sm sm:text-base font-medium text-gray-800
-              group-hover:text-blue-600 transition
-            "
+                flex flex-col items-center justify-center
+                rounded-3xl border-2 border-dashed border-blue-400 
+                h-28 w-28 sm:h-32 sm:w-32
+                hover:bg-blue-50 hover:border-blue-500
+                transition cursor-pointer
+              "
             >
-              {club.name}
-            </p>
-
-            {/* ACTIVE LABEL */}
-            {club.slug === activeSlug && (
-              <span className="mt-1 text-xs text-blue-600 font-semibold">
-                Active
-              </span>
-            )}
-          </div>
-        ))}
-
-        {/* CREATE CLUB — ONLY IF COACH */}
-        {isCoach && (
-          <Link
-            href="/auth/sign-up/createclub"
-            className="
-              flex flex-col items-center justify-center
-              rounded-xl border-2 border-dashed border-blue-400 
-              h-28 w-28 sm:h-32 sm:w-32
-              hover:bg-blue-50 hover:border-blue-500
-              transition cursor-pointer
-            "
-          >
-            <span className="text-4xl text-blue-600">＋</span>
-            <p className="mt-1 font-medium text-blue-600 text-sm">
-              Create Club
-            </p>
-          </Link>
-        )}
+              <span className="text-4xl text-blue-600">＋</span>
+              <p className="mt-1 font-medium text-blue-600 text-sm">
+                Create Club
+              </p>
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   )

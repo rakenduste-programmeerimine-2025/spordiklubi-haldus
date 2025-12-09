@@ -60,24 +60,25 @@ export default function SwitchTeamPage() {
       // 3) Load membership clubs
       const { data: memberships, error: memErr } = await supabase
         .from("member")
-        .select(`
+        .select(
+          `
           club:club_id (
             id,
             name,
             slug,
             club_logo
           )
-        `)
+        `,
+        )
         .eq("profile_id", user.id)
         .returns<MemberWithClub[]>()
 
       if (memErr) {
         console.error("Failed to load user clubs", memErr)
       } else {
-        const clubList =
-          (memberships ?? [])
-            .map((row) => row.club)
-            .filter((c): c is Club => c !== null)
+        const clubList = (memberships ?? [])
+          .map(row => row.club)
+          .filter((c): c is Club => c !== null)
 
         setClubs(clubList)
       }
@@ -102,7 +103,7 @@ export default function SwitchTeamPage() {
   if (loading) {
     return (
       <div className="flex justify-center pt-10 text-gray-600">
-        Loading your teams...
+        Loading your clubs...
       </div>
     )
   }
@@ -110,15 +111,15 @@ export default function SwitchTeamPage() {
   return (
     <div className="flex flex-col items-center pt-6 px-4">
       <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-        Switch Team
+        Switch Club
       </h1>
 
       <p className="text-gray-500 mb-10 text-center">
-        Choose which team you want to manage
+        Choose which club you want to manage
       </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-10">
-        {clubs.map((club) => (
+        {clubs.map(club => (
           <div
             key={club.id}
             onClick={() => handleSelectClub(club.slug)}
@@ -129,16 +130,16 @@ export default function SwitchTeamPage() {
           >
             <div
               className="
-              relative h-28 w-28 sm:h-32 sm:w-32 rounded-xl overflow-hidden 
+              relative h-28 w-28 sm:h-32 sm:w-32 rounded-3xl
               border-2 border-transparent hover:border-blue-500
-              transition
+              transition flex items-center justify-center
             "
             >
               <Image
                 src={getLogoSrc(club.club_logo)}
                 fill
                 alt={club.name}
-                className="object-cover"
+                className="object-contain p-2"
               />
             </div>
 
@@ -166,7 +167,7 @@ export default function SwitchTeamPage() {
             href="/auth/sign-up/createclub"
             className="
               flex flex-col items-center justify-center
-              rounded-xl border-2 border-dashed border-blue-400 
+              rounded-3xl border-2 border-dashed border-blue-400 
               h-28 w-28 sm:h-32 sm:w-32
               hover:bg-blue-50 hover:border-blue-500
               transition cursor-pointer

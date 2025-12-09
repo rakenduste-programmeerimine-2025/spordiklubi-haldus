@@ -27,7 +27,7 @@ export function MainNavbar({ clubslug }: { clubslug: string }) {
 
   const toggleMenu = () => setMenuOpen(prev => !prev)
 
-  // 👉 reusable fetch function
+  //reusable fetch function
   const fetchProfile = useCallback(async () => {
     if (!clubslug) return
 
@@ -60,7 +60,7 @@ export function MainNavbar({ clubslug }: { clubslug: string }) {
     fetchProfile()
   }, [fetchProfile])
 
-  // 🔵 listen for profile updates from settings
+  // listen for profile updates from settings
   useEffect(() => {
     const handler = () => {
       fetchProfile()
@@ -194,7 +194,7 @@ export function MainNavbar({ clubslug }: { clubslug: string }) {
                     onClick={() => setMenuOpen(false)}
                   >
                     <Shuffle className="h-4 w-4" />
-                    <span>Switch team</span>
+                    <span>Switch club</span>
                   </Link>
                 </li>
 
