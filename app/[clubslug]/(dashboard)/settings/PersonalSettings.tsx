@@ -69,6 +69,10 @@ export default function PersonalSettings({ profile }: { profile: any }) {
         }
       }
 
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("profile-updated"))
+      }
+
       alert("Saved!")
     } finally {
       setLoading(false)

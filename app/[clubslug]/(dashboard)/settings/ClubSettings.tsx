@@ -3,7 +3,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { generateSlug } from "@/lib/slug"
 import { createClient } from "@/lib/supabase/client"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { Trash2 } from "lucide-react"
 
@@ -23,6 +23,7 @@ export default function ClubSettings({
   const textToCopy = token
   const supabase = createClient()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const router = useRouter()
 
   const baseBtn =
     "inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white bg-[#3156ff] hover:bg-[#2442cc] transition"
@@ -71,11 +72,13 @@ export default function ClubSettings({
       try {
         logoUrl = await uploadLogo(clubLogo, clubId)
       } catch (err) {
+        console.error(err)
         alert("Failed to upload club logo")
         return
       }
     }
 
+    // Check uniqueness of club name/slug
     const { data: existing, error: existingErr } = await supabase
       .from("club")
       .select("id, name")
@@ -110,7 +113,13 @@ export default function ClubSettings({
       return
     }
 
-    redirect(`/${newSlug}/settings`)
+    // Tell navbar that club name/logo changed
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("profile-updated"))
+    }
+
+    // Navigate to (possibly) new slug
+    router.push(`/${newSlug}/settings`)
   }
 
   useEffect(() => {
@@ -244,12 +253,12 @@ export default function ClubSettings({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="
-                  w-fit 
-                  inline-flex items-center justify-center
-                  gap-2 rounded-full px-4 py-1.5
-                  text-sm font-medium text-white
-                bg-[#3156ff] hover:bg-[#2442cc] 
-                  transition
+                    w-fit 
+                    inline-flex items-center justify-center
+                    gap-2 rounded-full px-4 py-1.5
+                    text-sm font-medium text-white
+                    bg-[#3156ff] hover:bg-[#2442cc] 
+                    transition
                   "
                 >
                   Choose file
