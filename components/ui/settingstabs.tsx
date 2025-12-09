@@ -24,7 +24,7 @@ export default function SettingsTabs({ isCoach }: { isCoach: boolean }) {
 
   return (
     <nav className="mb-6">
-      {/* Compact pill group, equal widths */}
+      {/* Compact pill group */}
       <div className="inline-flex rounded-full bg-[#f3f0f4] p-1">
         {tabs.map(tab => {
           const isActive = activeTab === tab.key

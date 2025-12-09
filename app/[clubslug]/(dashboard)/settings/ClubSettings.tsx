@@ -221,7 +221,7 @@ export default function ClubSettings({
                   onChange={e => setClubLogo(e.target.files?.[0] ?? null)}
                 />
 
-                {/* Smaller button */}
+                {/* Choose file button */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -237,7 +237,7 @@ export default function ClubSettings({
                   Choose file
                 </button>
 
-                {/* Move text down slightly */}
+                {/* text */}
                 <p className="text-xs text-gray-500 mt-2">
                   PNG, JPG or SVG. Max 5MB
                 </p>
